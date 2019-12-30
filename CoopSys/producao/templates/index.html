@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Lançar produção</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+    <body>
+
+
+    <div class="row border"style="margin: 20px; padding: 10px; border-radius: 10px; background-color: blue; color: white">
+        <h1 style="margin: 25px; margin-left: 450px">LANÇAMENTO DE PRODUÇÃO</h1>
+    </div>
+
+    <div class="row border">
+
+        <div class="col-4">
+
+            <form method="POST" action="{% url 'salvarProducao' %}">
+                {% csrf_token %}
+
+                <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
+
+                    <div class="row">
+                        <input name="matricula" class="form-control" type="number" placeholder="Informe a matrícula" autofocus>
+                    </div>
+                    <div class="row">
+                        <button type="submit" class="btn btn-primary" style="margin-top: 20px">Registrar pesagem</button>
+                    </div>
+                    <div class="row">
+                        <p style="margin-top: 20px">{{ msg }}</p>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+
+        <div class="col-8">
+            <div class="col-12" style="padding: 40px">
+                <table class="table table-striped" style="margin: 20px">
+                    <thead>
+                        <tr>
+                            <th scope="col">Matricula</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Empresa</th>
+                            <th scope="col">Peso</th>
+                            <th scope="col">Data</th>
+                            <th scope="col">Operador</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for x in producao %}
+                        <div>
+
+                            <tr>
+                                <th scope="row">{{ x.funcionario.matricula }}</th>
+                                <td>{{ x.funcionario.nome }}</td>
+                                <td>{{ x.funcionario.cooperativa }}</td>
+                                <td>{{ x.producao }}</td>
+                                <td>{{ x.dia }}</td>
+                                <td>{{ x.usuario }}</td>
+                            </tr>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-8" style="padding: 70px">
+            <p>Usuário: {{ request.user }}</p>
+            <p>{{ data_atual }}</p>
+        </div>
+    </div>
+    </body>
+
+</html>
