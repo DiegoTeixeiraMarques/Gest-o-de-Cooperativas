@@ -9,8 +9,6 @@ import pdb
 
 def index(request):
 
-    print("teste")
-    print(request.POST.get('matricula'))
     try:
         matricula = request.POST.get('matricula')
         user = request.user.id
@@ -25,15 +23,17 @@ def index(request):
         producaoNova = ProducaoDiaria(dia=data, funcionario=funcionario, producao=peso, usuario=usuario)
         producaoNova.save()
 
-        print("teste")
 
     except:
         print("Matrícula não localizada ou não informada!")
         msg = 'Matrícula não localizada ou não informada!'
         data_atual = date.today()
 
-    tam = len(ProducaoDiaria.objects.all()) - 5
-    producao = ProducaoDiaria.objects.all()[tam:]
+    try:
+        tam = len(ProducaoDiaria.objects.all()) - 5
+        producao = ProducaoDiaria.objects.all()[tam:]
+    except:
+        producao = ProducaoDiaria.objects.all()
 
     template_name = 'index.html'
     context = {

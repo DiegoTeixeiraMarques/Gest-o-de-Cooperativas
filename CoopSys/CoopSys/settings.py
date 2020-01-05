@@ -68,15 +68,15 @@ WSGI_APPLICATION = 'CoopSys.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        #'ENGINE': 'django.db.backends.sqlite3',
+        #'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 
-        #'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        #'NAME': os.environ.get('DB_NAME', 'db_CoopSys'),
-        #'USER': os.environ.get('DB_USER', 'postgres'),
-        #'PASSWORD': os.environ.get('DB_PASS', '123'),
-        #'HOST': '192.168.0.5',
-        #'PORT': '5432',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ.get('DB_NAME', 'db_SysCoop'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASS', 'postgres'),
+        'HOST': '192.168.0.13',
+        'PORT': '5433',
     }
 }
 
@@ -119,5 +119,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/salvarProducao/'
+LOGOUT_REDIRECT_URL = '/login/'
