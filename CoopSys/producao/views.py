@@ -78,6 +78,8 @@ def pegarPeso():
     else:
         print("fechado")
 
+    new_weight = 20
+
     return (new_weight)
 
 def ponto(request):

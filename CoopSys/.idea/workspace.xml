@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="393ddff2-6bcc-459f-985f-e12de8fed5fc" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/producao/teste.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CoopSys/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/CoopSys/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/producao/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/producao/views.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -55,11 +55,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/producao/views.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="595">
-              <caret line="81" lean-forward="true" selection-start-line="46" selection-end-line="81" />
+            <state relative-caret-position="579">
+              <caret line="80" column="19" selection-start-line="80" selection-start-column="19" selection-end-line="80" selection-end-column="19" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
               </folding>
@@ -67,7 +67,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/producao/teste.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="608">
@@ -104,8 +104,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/CoopSys/settings.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1248">
-              <caret line="78" column="9" selection-start-line="78" selection-start-column="9" selection-end-line="78" selection-end-column="9" />
+            <state relative-caret-position="547">
+              <caret line="122" column="24" selection-start-line="122" selection-start-column="24" selection-end-line="122" selection-end-column="24" />
             </state>
           </provider>
         </entry>
@@ -142,11 +142,11 @@
         <option value="$PROJECT_DIR$/producao/urls.py" />
         <option value="$PROJECT_DIR$/producao/templates/index.html" />
         <option value="$PROJECT_DIR$/producao/templates/registration/login.html" />
-        <option value="$PROJECT_DIR$/CoopSys/settings.py" />
         <option value="$PROJECT_DIR$/venv/Lib/site-packages/django/contrib/auth/urls.py" />
         <option value="$PROJECT_DIR$/CoopSys/urls.py" />
-        <option value="$PROJECT_DIR$/producao/views.py" />
         <option value="$PROJECT_DIR$/producao/teste.py" />
+        <option value="$PROJECT_DIR$/CoopSys/settings.py" />
+        <option value="$PROJECT_DIR$/producao/views.py" />
       </list>
     </option>
   </component>
@@ -437,13 +437,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CoopSys/settings.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1248">
-          <caret line="78" column="9" selection-start-line="78" selection-start-column="9" selection-end-line="78" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/workspace/sys-django/venv2/Lib/site-packages/django/contrib/admin/__init__.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -467,20 +460,27 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/producao/views.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="595">
-          <caret line="81" lean-forward="true" selection-start-line="46" selection-end-line="81" />
-          <folding>
-            <element signature="e#0#35#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/producao/teste.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="608">
           <caret line="38" column="11" selection-start-line="38" selection-start-column="11" selection-end-line="38" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CoopSys/settings.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="547">
+          <caret line="122" column="24" selection-start-line="122" selection-start-column="24" selection-end-line="122" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/producao/views.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="579">
+          <caret line="80" column="19" selection-start-line="80" selection-start-column="19" selection-end-line="80" selection-end-column="19" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
