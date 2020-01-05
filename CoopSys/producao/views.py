@@ -45,7 +45,7 @@ def index(request):
     return render(request, template_name, context)
 
 def pegarPeso():
-    '''
+
     __message = str(chr(5))
     _serial = serial.Serial(
         'com1',
@@ -69,7 +69,7 @@ def pegarPeso():
         # new_weight = ["0","3",".","1","2"]
         new_weight = []
         for x in range(len(str_weight)):
-            if 0 < x < 6:
+            if 0 < x < 7:
                 new_weight.append(str_weight[x])
 
         _serial.close()
@@ -77,8 +77,6 @@ def pegarPeso():
         new_weight = "".join(new_weight)
     else:
         print("fechado")
-    '''
-    new_weight = 20
 
     return (new_weight)
 
