@@ -30,7 +30,7 @@ def index(request):
         data_atual = date.today()
 
     try:
-        tam = len(ProducaoDiaria.objects.all()) - 5
+        tam = len(ProducaoDiaria.objects.all()) - 8
         producao = ProducaoDiaria.objects.all()[tam:]
     except:
         producao = ProducaoDiaria.objects.all()
