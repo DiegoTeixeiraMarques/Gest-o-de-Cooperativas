@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+    {% block title %}Faça o login{% endblock %}
+    {% block content %}
+        <div class="container">
+            <h1>Faça o seu login</h1>
+            <form action="." method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <input class="btn btn-primary" type="submit" value="Login">
+            </form>
+        </div>
+    {% endblock %}
+
+</body>
+</html>

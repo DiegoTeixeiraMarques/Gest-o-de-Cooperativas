@@ -5,5 +5,6 @@ from producao.views import index
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index, name="salvarProducao"),
+    path('account/', include('django.contrib.auth.urls')),
     #path('', include('producao.urls')),
 ]

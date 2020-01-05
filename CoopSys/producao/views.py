@@ -9,7 +9,8 @@ import pdb
 
 def index(request):
 
-
+    print("teste")
+    print(request.POST.get('matricula'))
     try:
         matricula = request.POST.get('matricula')
         user = request.user.id
@@ -23,6 +24,8 @@ def index(request):
 
         producaoNova = ProducaoDiaria(dia=data, funcionario=funcionario, producao=peso, usuario=usuario)
         producaoNova.save()
+
+        print("teste")
 
     except:
         print("Matrícula não localizada ou não informada!")
@@ -78,3 +81,14 @@ def pegarPeso():
     new_weight = 20
 
     return (new_weight)
+
+def ponto(request):
+
+    template_name = 'index.html'
+    context = {
+        'producao': producao,
+        'msg': msg,
+        'data_atual': data_atual
+    }
+
+    return render(request, template_name, context)

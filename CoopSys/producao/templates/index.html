@@ -10,7 +10,7 @@
 
 
     <div class="row border"style="margin: 20px; padding: 10px; border-radius: 10px; background-color: blue; color: white">
-        <h1 style="margin: 25px; margin-left: 450px">LANÇAMENTO DE PRODUÇÃO</h1>
+        <h3 style="margin: 25px; margin-left: 450px">LANÇAMENTO DE PRODUÇÃO</h3>
     </div>
 
     <div class="row border">
@@ -72,11 +72,22 @@
     </div>
 
     <div class="row">
-        <div class="col-8" style="padding: 70px">
-            <p>Usuário: {{ request.user }}</p>
+        <div class="col-8" style="padding: 50px">
+            <p>Usuário: {{ user.username }}</p>
             <p>{{ data_atual }}</p>
         </div>
+
+        <div class="col-4" style="padding: 50px">
+            {% if user.is_authenticated %}
+            <p class="logged-in-p">
+                <span class="sair"><h3><a href="{% url 'logout' %}">Sair</a></h3></span>
+            </p>
+            {% endif %}
+        </div>
     </div>
+
+
+
     </body>
 
 </html>
