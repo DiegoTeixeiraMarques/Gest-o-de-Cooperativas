@@ -9,6 +9,6 @@ urlpatterns = [
     path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),
     path('salvarProducao/', index, name="salvarProducao"),
     path('account/', include('django.contrib.auth.urls')),
-    path('apontarFalta/', apontarFalta, name="apontarFalta")
+    path('account/', apontarFalta, name="apontarFalta")
     #path('', include('producao.urls')),
 ]

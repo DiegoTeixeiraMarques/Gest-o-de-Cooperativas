@@ -15,6 +15,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# jet
+JET_DEFAULT_THEME = 'default'
+#JET_DEFAULT_THEME = 'green'
+#JET_DEFAULT_THEME = 'light-violet'
+#JET_DEFAULT_THEME = 'light-green'
+#JET_DEFAULT_THEME = 'light-blue'
+#JET_DEFAULT_THEME = 'light-gray'
+
+JET_SIDE_MENU_COMPACT = False
 
 # Application definition
 
@@ -121,6 +130,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
 LOGIN_REDIRECT_URL = '/salvarProducao/'
 LOGOUT_REDIRECT_URL = '/account/login/'

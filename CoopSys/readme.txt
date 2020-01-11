@@ -9,6 +9,7 @@ Executar os comandos abaixo no CMD
 	pip install django-jet
 	pip install jet
 	pip install google-api-python-client==1.4.1
+	pip install django-jet2
 	
 
 python manage.py migrate jet
