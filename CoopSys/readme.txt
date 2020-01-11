@@ -7,8 +7,11 @@ Executar os comandos abaixo no CMD
 	pip install pyserial
 	pip install django-bootstrap-form
 	pip install django-jet
+	pip install jet
+	pip install google-api-python-client==1.4.1
 	
-	
+
+python manage.py migrate jet
 	
 	
 Instruções para conexão com BD
