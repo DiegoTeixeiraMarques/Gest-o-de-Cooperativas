@@ -10,26 +10,31 @@
 
 
     <div class="row border"style="margin: 20px; padding: 10px; border-radius: 10px; background-color: blue; color: white">
-        <h3 style="margin: 25px; margin-left: 450px">LANÇAMENTO DE PRODUÇÃO</h3>
+        <h3 style="margin: 25px; margin-left: 450px">APONTAMENTO DE FALTA</h3>
     </div>
 
     <div class="row border">
 
         <div class="col-4">
 
-            <form method="POST" action="{% url 'salvarProducao' %}">
+            <form method="POST" action="{% url 'apontarFalta' %}">
                 {% csrf_token %}
 
                 <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
 
-                    <div class="row">
+                    <div class="row" style="margin: 10px;">
                         <input name="matricula" class="form-control" type="number" placeholder="Informe a matrícula" autofocus>
                     </div>
-                    <div class="row">
-                        <button type="submit" class="btn btn-primary" style="margin-top: 20px">Registrar pesagem</button>
+
+                    <div class="row" style="margin: 10px;">
+                        <input name="motivo" class="form-control" type="text" placeholder="Informe o motivo" autofocus>
                     </div>
-                    <div class="row">
-                        <p style="margin-top: 20px">{{ msg }}</p>
+
+                    <div class="row" style="margin: 10px">
+                        <button type="submit" class="btn btn-primary" style="margin-top: 20px">Apontar Falta</button>
+                    </div>
+                    <div class="row" style="margin: 10px">
+                        <p style="margin-top: 20px;">{{ msg }}</p>
                     </div>
                 </div>
 
@@ -42,26 +47,24 @@
                 <table class="table table-striped" style="margin: 20px">
                     <thead>
                         <tr>
-                            <th scope="col">Matricula</th>
+                            <th scope="col">Dia</th>
                             <th scope="col">Nome</th>
                             <th scope="col">Empresa</th>
-                            <th scope="col">Peso</th>
-                            <th scope="col">Data</th>
-                            <th scope="col">Operador</th>
+                            <th scope="col">Presenca</th>
+                            <th scope="col">Motivo</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        {% for x in producao %}
+                        {% for x in frequencia %}
                         <div>
 
                             <tr>
-                                <th scope="row">{{ x.funcionario.matricula }}</th>
+                                <th scope="row">{{ x.dia.dia }}</th>
                                 <td>{{ x.funcionario.nome }}</td>
                                 <td>{{ x.funcionario.cooperativa }}</td>
-                                <td>{{ x.producao }}</td>
-                                <td>{{ x.dia }}</td>
-                                <td>{{ x.usuario }}</td>
+                                <td>{{ x.prresenca }}</td>
+                                <td>{{ x.motivo }}</td>
                             </tr>
                         </div>
                         {% endfor %}
@@ -78,18 +81,11 @@
         </div>
 
         <div class="col-4" style="padding: 50px">
-            <p class="logged-in-p">
-                <span class="sair"><h3><a href="{% url 'apontarFalta' %}">Apontar Faltas</a></h3></span>
-            </p>
-
-        </br>
-
             {% if user.is_authenticated %}
             <p class="logged-in-p">
-                <span class="sair"><h4><a href="{% url 'logout' %}">Sair</a></h4></span>
+                <span class="sair"><h3><a href="{% url 'logout' %}">Sair</a></h3></span>
             </p>
             {% endif %}
-            
         </div>
     </div>
 

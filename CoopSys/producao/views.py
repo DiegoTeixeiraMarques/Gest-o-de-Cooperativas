@@ -77,8 +77,8 @@ def pegarPeso():
         new_weight = "".join(new_weight)
     else:
         print("fechado")
-
-    #new_weight = 20
+        new_weight = 20
+    
 
     return (new_weight)
 
