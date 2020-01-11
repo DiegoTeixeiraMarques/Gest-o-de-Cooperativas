@@ -5,6 +5,7 @@ Executar os comandos abaixo no CMD
 	pip install serial
 	pip install Django==2.0.13
 	pip install pyserial
+	pip install django-bootstrap-form
 	
 	
 	
