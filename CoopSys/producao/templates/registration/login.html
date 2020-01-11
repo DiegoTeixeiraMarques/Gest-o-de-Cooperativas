@@ -8,16 +8,46 @@
 </head>
 <body>
 
+    {% load bootstrap %}
+
     {% block content %}
+
+        
         <div class="container">
-            <h1>Faça o seu login</h1>
-            <form action="." method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <input class="btn btn-primary" type="submit" value="Login">
-            </form>
+            
+            <div class="box">
+                <h1 style="color: black; margin-bottom: 15px;">LOGIN</h1>
+                <form action="." method="post">
+                    {% csrf_token %}
+                    {{ form|bootstrap }}
+                    <input class="btn btn-primary" type="submit" value="Entrar" style="margin-top: 15px;">
+                </form>
+            </div>
         </div>
+        
     {% endblock %}
+
+    <style>
+        .container {
+            width: 100vw;
+            height: 100vh;
+    
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center
+            }
+        .box {
+            width: 350px;
+            height: 350px;
+            background: rgb(115, 170, 202);
+            padding: 20px;
+            border-radius: 20px;
+            }
+        .body {
+            margin: 0px;
+            }
+    </style>
 
 </body>
 </html>
