@@ -15,17 +15,23 @@
         
         <div class="container">
             
+            
             <div class="box">
-                <h1 style="color: black; margin-bottom: 15px;">LOGIN</h1>
+                <h3 style="color: black; margin-bottom: 15px; text-align: center;">Cooperativa</h3>
                 <form action="." method="post">
                     {% csrf_token %}
                     {{ form|bootstrap }}
                     <input class="btn btn-primary" type="submit" value="Entrar" style="margin-top: 15px;">
                 </form>
             </div>
+
+            <span style="margin: 50px;"><a style="background-color:rgb(115, 170, 202); border-radius: 8px; padding: 8px; color: black;" href="/" style="padding-left: 80px; color:black">Painel administrativo</a></span>
         </div>
         
+            
     {% endblock %}
+
+
 
     <style>
         .container {
