@@ -16,8 +16,8 @@ def apontarFalta(request):
         funcionario = Funcionario.objects.get(matricula=matricula)
         data = Calendario.objects.get(data=data_atual)
 
-        falta = Frequencia(dia=data, funcionario=funcionario, presenca=presenca, motivo=1)
-        Frequencia.save()
+        falta = Frequencia(dia=data, funcionario=funcionario, presenca=1, motivo=motivo)
+        falta.save()
 
 
     except:
@@ -26,10 +26,12 @@ def apontarFalta(request):
         data_atual = date.today()
 
     try:
-        tam = len(Frequencia.objects.all()) - 8
+        tam = len(Frequencia.objects.all()) - 5
         frequencia = Frequencia.objects.all()[tam:]
     except:
         frequencia = Frequencia.objects.all()
+
+    print(frequencia)
 
     template_name = 'ponto.html'
     context = {

@@ -30,10 +30,11 @@ def index(request):
         data_atual = date.today()
 
     try:
-        tam = len(ProducaoDiaria.objects.all()) - 8
-        producao = ProducaoDiaria.objects.all()[tam:]
+        tam = len(ProducaoDiaria.objects.all().filter(usuario=user)) - 5
+        print(tam)
+        producao = ProducaoDiaria.objects.all().filter(usuario=user)[tam:]
     except:
-        producao = ProducaoDiaria.objects.all()
+        producao = ProducaoDiaria.objects.all().filter(usuario=user)
 
     template_name = 'index.html'
     context = {
