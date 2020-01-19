@@ -10,6 +10,9 @@ Executar os comandos abaixo no CMD
 	pip install jet
 	pip install google-api-python-client==1.4.1
 	pip install django-jet2
+	pip install xlwt
+
+Tirar o default peso no método pegarpeso()
 	
 
 python manage.py migrate jet

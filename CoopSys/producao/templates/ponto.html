@@ -9,7 +9,7 @@
     <body>
 
 
-    <div class="row border"style="margin: 20px; padding: 10px; border-radius: 10px; background-color: blue; color: white">
+    <div class="row border"style="margin: 20px; padding: 10px; border-radius: 10px; background-color: red; color: white">
         <h3 style="margin: 25px; margin-left: 450px">APONTAMENTO DE FALTA</h3>
     </div>
 
@@ -45,7 +45,7 @@
         <div class="col-8">
             <div class="col-12" style="padding: 40px">
                 <table class="table table-striped" style="margin: 20px">
-                    <thead>
+                    <thead class="thead-dark">
                         <tr>
                             <th scope="col">Dia</th>
                             <th scope="col">Nome</th>
@@ -59,7 +59,7 @@
                         <div>
 
                             <tr>
-                                <th scope="row">{{ x.dia.dia }}</th>
+                                <th scope="row">{{ x.dia.data }}</th>
                                 <td>{{ x.funcionario.nome }}</td>
                                 <td>{{ x.funcionario.cooperativa }}</td>
                                 <td>{{ x.motivo }}</td>
@@ -78,12 +78,18 @@
             <p>{{ data_atual }}</p>
         </div>
 
-        <div class="col-4" style="padding: 50px">
+        <div class="col-4" style="padding: 50PX;">
+
+            <button type="button" class="btn btn-info">
+                <a href="{% url 'salvarProducao' %}" style="color: black;">VOLTAR</a>    
+            </button>
+            
             {% if user.is_authenticated %}
-            <p class="logged-in-p">
-                <span class="sair"><h3><a href="{% url 'logout' %}">Sair</a></h3></span>
-            </p>
+            <button type="button" class="btn btn-danger">
+                <a href="{% url 'logout' %}" style="color: black;">FAZER LOGOUT</a>    
+            </button>
             {% endif %}
+
         </div>
     </div>
 

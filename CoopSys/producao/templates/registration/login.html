@@ -21,11 +21,16 @@
                 <form action="." method="post">
                     {% csrf_token %}
                     {{ form|bootstrap }}
-                    <input class="btn btn-primary" type="submit" value="Entrar" style="margin-top: 15px;">
+                    <input class="btn btn-primary" type="submit" value="ENTRAR" style="margin-top: 15px;">
+
+                    <button type="button" class="btn btn-light" style="margin-top: 15px; margin-left: 65px;">
+                        <a href="/" style="color: gray;">PAINEL ADMINISTRATIVO</a>    
+                    </button>
+
                 </form>
             </div>
-
-            <span style="margin: 50px;"><a style="background-color:rgb(115, 170, 202); padding: 8px; color: black; border-radius: 15px" href="/" style="padding-left: 80px; color:black">Painel administrativo</a></span>
+            
+            
         </div>
         
             
@@ -44,14 +49,15 @@
             align-items: center
             }
         .box {
-            width: 350px;
+            width: 400px;
             height: 350px;
-            background: rgb(115, 170, 202);
+            background: rgb(red, green, blue);
             padding: 20px;
             border-radius: 20px;
             }
         .body {
             margin: 0px;
+            
             }
     </style>
 

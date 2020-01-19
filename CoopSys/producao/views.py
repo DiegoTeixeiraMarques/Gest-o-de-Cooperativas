@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, HttpResponse
 from .models import ProducaoDiaria
 from funcionario.models import Funcionario
 from calendario.models import Calendario
@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from datetime import date
 import serial
 import pdb
+import xlwt
 
 def index(request):
 
@@ -14,7 +15,6 @@ def index(request):
         user = request.user.id
         peso = pegarPeso()
         data_atual = date.today()
-        msg = 'Salvo com Sucesso!'
 
         funcionario = Funcionario.objects.get(matricula=matricula)
         usuario = User.objects.get(id=user)
@@ -22,16 +22,17 @@ def index(request):
 
         producaoNova = ProducaoDiaria(dia=data, funcionario=funcionario, producao=peso, usuario=usuario)
         producaoNova.save()
+        msg = 'Salvo com Sucesso!'
 
 
     except:
-        print("Matrícula não localizada ou não informada!")
+        #print("Matrícula não localizada ou não informada!")
         msg = 'Matrícula não localizada ou não informada!'
         data_atual = date.today()
 
     try:
         tam = len(ProducaoDiaria.objects.all().filter(usuario=user)) - 5
-        print(tam)
+        #print(tam)
         producao = ProducaoDiaria.objects.all().filter(usuario=user)[tam:]
     except:
         producao = ProducaoDiaria.objects.all().filter(usuario=user)
@@ -59,10 +60,9 @@ def pegarPeso():
             writeTimeout=2
         )
 
-        print(_serial)
+        #print(_serial)
 
-        # if True:
-    
+        # if True
         if _serial.isOpen():
             print("aberto")
             _serial.write(__message.encode('ascii'))
@@ -79,12 +79,43 @@ def pegarPeso():
 
             new_weight = "".join(new_weight)
         else:
-            print("fechado")
+            #print("fechado")
             new_weight = 20
     except:
-        print("exceção")
+        #print("exceção")
         new_weight = 20
     
 
     return (new_weight)
 
+def exportar_excel(request):
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="funcionarios.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Funcionarios')
+
+    # Sheet header, first row
+    row_num = 0
+
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['Cooperativa', 'Matricula', 'Codigo', 'Nome', 'Apelido', 'Cpf', 'Setor', 'Meta', 'Supervisor']
+
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+
+
+
+    rows = Funcionario.objects.all().values_list('cooperativa', 'matricula', 'codigo', 'nome', 'apelido', 'cpf', 'setor', 'meta', 'supervisor')
+    for row in rows:
+        row_num += 1
+        for col_num in range(len(row)):
+            ws.write(row_num, col_num, row[col_num], font_style)
+
+    wb.save(response)
+    return response
