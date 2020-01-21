@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from funcionario.models import Funcionario
+from .models import Funcionario
 from calendario.models import Calendario
 from .models import Frequencia
 from datetime import date
@@ -13,10 +13,13 @@ def apontarFalta(request):
 
         funcionario = Funcionario.objects.get(matricula=matricula)
         data = Calendario.objects.get(data=data_atual)
-
         falta = Frequencia(dia=data, funcionario=funcionario, presenca=1, motivo=motivo)
-        falta.save()
-        msg = 'Salvo com Sucesso!'
+
+        if(validacaoApontamentoFalta(falta)):
+            falta.save()
+            msg = 'Salvo com Sucesso!'
+        else:
+            msg = 'Falta já informada para este funcionário!'
 
     except:
         #print("Matrícula não localizada ou não informada!")
@@ -28,6 +31,7 @@ def apontarFalta(request):
         frequencia = Frequencia.objects.all()[tam:]
     except:
         frequencia = Frequencia.objects.all()
+        #msg = 'Matrícula não localizada ou não informada!'
 
     #print(frequencia)
 
@@ -42,7 +46,16 @@ def apontarFalta(request):
 
 def validacaoApontamentoFalta(obj):
 
-    if ():
+    """ Verifica se o funcionário já tem falta apontada no mesmo dia """
 
+    faltasFuncionario = Frequencia.objects.all().filter(funcionario=obj.funcionario.id)
 
+    if faltasFuncionario == []:
+        return True
+    else:
+        indice = 0
+        for i in faltasFuncionario:
+            if obj.dia == faltasFuncionario[indice].dia:
+                return False
+            indice = indice + 1
     return True
