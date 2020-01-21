@@ -90,7 +90,7 @@ def pegarPeso():
 
 def exportar_excel(request):
     response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="funcionarios.xls"'
+    response['Content-Disposition'] = 'attachment; filename="Funcionarios.xls"'
 
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Funcionarios')
@@ -112,6 +112,38 @@ def exportar_excel(request):
 
 
     rows = Funcionario.objects.all().values_list('cooperativa', 'matricula', 'codigo', 'nome', 'apelido', 'cpf', 'setor', 'meta', 'supervisor')
+    for row in rows:
+        row_num += 1
+        for col_num in range(len(row)):
+            ws.write(row_num, col_num, row[col_num], font_style)
+
+    wb.save(response)
+    return response
+
+def exportar_producao(request):
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="Producao_do_dia.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Lançamentos')
+
+    # Sheet header, first row
+    row_num = 0
+
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['Dia', 'Funcionario', 'Producao', 'Usuario']
+
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+
+    data_atual = date.today()
+    data = Calendario.objects.get(data=data_atual)
+    rows = ProducaoDiaria.objects.all().filter(dia=data).values_list('dia', 'funcionario', 'producao', 'usuario')
     for row in rows:
         row_num += 1
         for col_num in range(len(row)):

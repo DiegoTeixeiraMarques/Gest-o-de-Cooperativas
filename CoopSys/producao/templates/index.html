@@ -82,6 +82,10 @@
             <button type="button" class="btn btn-info">
                 <a href="{% url 'apontarFalta' %}" style="color: black;">APONTAR FALTAS</a>    
             </button>
+
+            <button type="button" class="btn btn-info">
+                <a href="{% url 'exportar_producao' %}" style="color: black;">EXPORTAR</a>    
+            </button>
             
             {% if user.is_authenticated %}
                 <button type="button" class="btn btn-danger">
