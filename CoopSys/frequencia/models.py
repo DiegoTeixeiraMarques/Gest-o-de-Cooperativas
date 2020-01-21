@@ -7,6 +7,7 @@ class Frequencia(models.Model):
     funcionario = models.ForeignKey(Funcionario, related_name='Funcionario', verbose_name='Funcionario', on_delete=models.CASCADE, blank=False, null=False)
     presenca = models.BooleanField(blank=False, default=True)
     motivo = models.CharField(max_length=255, blank=True, null=True, verbose_name='Motivo')
+    justificada = models.BooleanField(blank=False, default=False)
 
     created_at = models.DateTimeField('Criado em', auto_now_add=True)
     updated_at = models.DateTimeField('Criado em', auto_now=True)

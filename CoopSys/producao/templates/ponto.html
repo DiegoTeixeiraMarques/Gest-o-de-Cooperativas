@@ -48,6 +48,7 @@
                     <thead class="thead-dark">
                         <tr>
                             <th scope="col">Dia</th>
+                            <th scope="col">Matrícula</th>
                             <th scope="col">Nome</th>
                             <th scope="col">Empresa</th>
                             <th scope="col">Motivo</th>
@@ -60,6 +61,7 @@
 
                             <tr>
                                 <th scope="row">{{ x.dia.data }}</th>
+                                <th scope="row">{{ x.funcionario.matricula }}</th>
                                 <td>{{ x.funcionario.nome }}</td>
                                 <td>{{ x.funcionario.cooperativa }}</td>
                                 <td>{{ x.motivo }}</td>
