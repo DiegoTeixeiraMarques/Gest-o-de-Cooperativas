@@ -84,10 +84,10 @@ DATABASES = {
         #'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DB_NAME', 'db_SysCoop'),
+        'NAME': os.environ.get('DB_NAME', 'bd_SysCoop'),
         'USER': os.environ.get('DB_USER', 'postgres'),
         'PASSWORD': os.environ.get('DB_PASS', 'postgres'),
-        'HOST': 'localhost',
+        'HOST': '192.168.1.24',
         'PORT': '5433',
     }
 }
