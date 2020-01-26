@@ -13,23 +13,35 @@ def index(request):
     try:
         codigo = request.POST.get('codigo')
         user = request.user.id
-        peso = pegarPeso()
         data_atual = date.today()
 
         funcionario = Funcionario.objects.get(codigo=codigo)
         usuario = User.objects.get(id=user)
-        data = Calendario.objects.get(data=data_atual)
+    except:
+        msg = 'Código não localizado!'
+        data_atual = date.today()
 
+    try:
+        peso = pegarPeso()
+    except:
+        msg = 'Problema ao pegar o peso da balança!'
+
+    try:
+        data = Calendario.objects.get(data=data_atual)
+    except:
+        msg = 'Cadastre a data de hoje no banco de dados!'
+        data_atual = date.today()
+
+    try:
         producaoNova = ProducaoDiaria(dia=data, funcionario=funcionario, producao=peso, usuario=usuario)
         producaoNova.save()
         msg = 'Salvo com Sucesso!'
-
-
     except:
-        #print("Matrícula não localizada ou não informada!")
-        msg = 'Código não localizada ou não informada!'
-        data_atual = date.today()
-
+        if codigo == None:
+            msg = '...'
+        else:
+            print('Erro ao salvar registro.')
+  
     try:
         tam = len(ProducaoDiaria.objects.all().filter(usuario=user)) - 5
         #print(tam)

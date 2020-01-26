@@ -23,7 +23,7 @@ def apontarFalta(request):
 
     except:
         #print("Matrícula não localizada ou não informada!")
-        msg = 'Código não localizada ou não informada!'
+        msg = 'Código não localizado ou não informado!'
         data_atual = date.today()
 
     try:
