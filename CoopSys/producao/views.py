@@ -27,7 +27,7 @@ def index(request):
 
     except:
         #print("Matrícula não localizada ou não informada!")
-        msg = 'Matrícula não localizada ou não informada!'
+        msg = 'Código não localizada ou não informada!'
         data_atual = date.today()
 
     try:

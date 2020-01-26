@@ -7,13 +7,13 @@ from datetime import date
 def apontarFalta(request):
 
     try:
-        matricula = request.POST.get('matricula')
+        codigo = request.POST.get('codigo')
         motivo = request.POST.get('motivo')
         data_atual = date.today()
 
-        funcionario = Funcionario.objects.get(matricula=matricula)
+        funcionario = Funcionario.objects.get(codigo=codigo)
         data = Calendario.objects.get(data=data_atual)
-        falta = Frequencia(dia=data, funcionario=funcionario, presenca=1, motivo=motivo)
+        falta = Frequencia(dia=data, funcionario=funcionario, presenca=0, motivo=motivo)
 
         if(validacaoApontamentoFalta(falta)):
             falta.save()
@@ -23,7 +23,7 @@ def apontarFalta(request):
 
     except:
         #print("Matrícula não localizada ou não informada!")
-        msg = 'Matrícula não localizada ou não informada!'
+        msg = 'Código não localizada ou não informada!'
         data_atual = date.today()
 
     try:
