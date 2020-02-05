@@ -132,13 +132,14 @@ def exportar_excel(request):
     wb.save(response)
     return response
 
-def exportar_producao(request):
-    try:
-        response = HttpResponse(content_type='application/ms-excel')
-        response['Content-Disposition'] = 'attachment; filename="Producao_do_dia.xls"'
+def exportar_producao2(request):
 
-        wb = xlwt.Workbook(encoding='utf-8')
-        ws = wb.add_sheet('Lançamentos')
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="Producao_do_dia.xls"'
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Lançamentos')
+
+    try:
 
         # Sheet header, first row
         row_num = 0
@@ -156,14 +157,68 @@ def exportar_producao(request):
 
         data_atual = date.today()
         data = Calendario.objects.get(data=data_atual)
-        rows = ProducaoDiaria.objects.all().filter(dia=data).values_list('dia', 'funcionario', 'producao', 'usuario')
-        for row in rows:
+        rows = ProducaoDiaria.objects.all().filter(dia=data).values_list('dia', 'funcionario', 'producao', 'usuario')        
+        rows2 = []
+
+        for i in range(len(rows)):
+            A = format(Calendario.objects.get(id=rows[i][0]).data, "%d/%m/%Y")
+            B = Funcionario.objects.get(id=rows[i][1]).nome
+            C = rows[i][2]
+            D = User.objects.get(id=rows[i][3]).username
+            rows2.append([A, B, C, D])
+
+        for row in rows2:
             row_num += 1
             for col_num in range(len(row)):
-                ws.write(row_num, col_num, row[col_num], font_style)
-
+                ws.write(row_num, col_num, row[col_num], font_style)          
+        
         wb.save(response)
         return response
-    except:
+    except:    
         print('Exceção!')
-        pass
+        wb.save(response)
+        return response
+
+def exportar_producao(request):
+
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="Producao_do_mes.xls"'
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Fechamento_mes')
+
+    try:
+
+        # Sheet header, first row
+        row_num = 0
+
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+
+        columns = ['Supervisor']
+
+        for col_num in range(len(columns)):
+            ws.write(row_num, col_num, columns[col_num], font_style)
+
+        # Sheet body, remaining rows
+        font_style = xlwt.XFStyle()
+
+        funcionarios = Funcionario.objects.all().filter(supervisor!=None).values_list('nome', 'supervisor')        
+        supervisores = []
+
+        for i in range(len(funcionarios)):
+            if funcionarios[i][1] != None:
+                supervisores.append(funcionarios[i][1])
+
+
+        for row in funcionarios:
+            row_num += 1
+            for col_num in range(len(row)):
+                ws.write(row_num, col_num, row[col_num], font_style)          
+        
+        wb.save(response)
+        return response
+    except:    
+        print('Exceção!')
+        wb.save(response)
+        return response
+        
