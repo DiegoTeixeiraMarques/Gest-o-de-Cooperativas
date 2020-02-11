@@ -160,9 +160,15 @@ def exportar_producao(request):
     data = Calendario.objects.get(data=dataInicial)
 
     # Acrescentando as duas primeiras colunas
-    columns.append('Funcionario')
+    columns.append('Código')
+    columns.append('Funcionário')
     columns.append('Supervisor')
     columns.append('Empresa')
+    columns.append('Dias Totais')
+    columns.append('Dias Úteis')
+    columns.append('Média')
+    columns.append('Efetiva')
+    
 
     # Colocando datas numa lista
     for i in range(qtdDias):
@@ -177,7 +183,9 @@ def exportar_producao(request):
     font_style = xlwt.XFStyle() 
 
     funcionarios = buscarFuncionarios()
+    
     funcionarios = buscarSupervisores_Empresa(funcionarios)
+    funcionarios = buscarProducoes(funcionarios, datas)
 
     for row in funcionarios:
         row_num += 1
@@ -191,16 +199,16 @@ def exportar_producao(request):
         print('Exceção!')
         wb.save(response)
         return response'''
-        
+
     
 def buscarFuncionarios():
 
     """ Retornar todos os funcionarios que tem supervisor """
-    query = Funcionario.objects.all().filter().values_list('nome', 'supervisor', 'cooperativa')
+    query = Funcionario.objects.all().filter().values_list('codigo', 'nome', 'supervisor', 'cooperativa')
     funcionarios = []
     for i in query:
-        if i[1] != None:
-            funcionarios.append([i[0], i[1], i[2]])
+        if i[2] != None:
+            funcionarios.append([i[0], i[1], i[2], i[3]]) # codigo, nome, supervisor, empresa
     return funcionarios
 
 
@@ -208,13 +216,30 @@ def buscarSupervisores_Empresa(funcionarios):
 
     """ Substitue os id de supervidor e empresa pelos nomes de cada um """
     for i in funcionarios:
-        supervisor = Funcionario.objects.get(id=i[1])
-        empresa = Cooperativa.objects.get(id=i[2])
-        i[1] = supervisor.nome
-        i[2] = empresa.nome
+        supervisor = Funcionario.objects.get(id=i[2])
+        empresa = Cooperativa.objects.get(id=i[3])
+        i[2] = supervisor.nome
+        i[3] = empresa.nome
     return funcionarios
 
 
-def buscarProducao(funcionarios, datas):
+def buscarProducoes(funcionarios, datas):
 
+    for j in range(len(funcionarios)):
+        coluna = 8 # Primeira coluna referente a produção
+        funcionario = Funcionario.objects.get(codigo=funcionarios[j][0])
+        for i in datas:
+            dia = Calendario.objects.get(data=i)
+            query = ProducaoDiaria.objects.all().filter(dia=dia, funcionario=funcionario).values_list('producao')
+
+            if query.count() != 0:
+                total = 0.00    # Acumulador de produçaõ diária
+                for m in query:
+                    total += float(m[0])
+                
+                funcionarios[j].append(total)
+                coluna += 1     # Pula para coluna seguinte
+            coluna += 1     # Pula para coluna seguinte
+
+           
     return funcionarios

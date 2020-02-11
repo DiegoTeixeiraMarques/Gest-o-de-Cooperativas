@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from producao.views import index, exportar_excel, exportar_producao
+from producao.views import index, exportar_producao
 from frequencia.views import apontarFalta
 
 urlpatterns = [
