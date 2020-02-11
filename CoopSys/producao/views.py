@@ -155,7 +155,7 @@ def exportar_producao(request):
     row_num = 0
     columns = []
     datas = []
-    dataInicial = date.today()
+    dataInicial = date.fromordinal(date.today().toordinal()-2)
     dataFinal = date.fromordinal(dataInicial.toordinal()+7)
     qtdDias = (dataFinal - dataInicial).days
     data = Calendario.objects.get(data=dataInicial)
@@ -165,7 +165,7 @@ def exportar_producao(request):
     columns.append('Funcionário')
     columns.append('Supervisor')
     columns.append('Empresa')
-    columns.append('Dias Trabalhados')
+    columns.append('Dias Considerados')
     columns.append('Dias Úteis')
     columns.append('Média')
     columns.append('Efetiva')
@@ -268,7 +268,19 @@ def buscarProducoes(funcionarios, datas):
                     total += float(m[0])     
                 funcionarios[j].append(total)
             else:
-                funcionarios[j].append(0.00)       
+                funcionarios[j].append(0.00)
+
+    # Calculando as médias
+    for i in funcionarios:
+        coluna = 7
+        for j in range(len(i) - 7): # Subtrai as primeiras colunas
+            media += i[coluna]
+            coluna += 1
+        i[6] = media / i[5] # Média de produção
+        i[7] =  media / i[4] # Média efetiva de produção
+
+        media = 0
+
     return funcionarios
 
 
