@@ -5,7 +5,7 @@ from django.test import TestCase
 import xlwt
 from datetime import date
 #from calendario.models import Calendario
-from .models import ProducaoDiaria
+#from .models import ProducaoDiaria
 
 # Create your tests here.
 def exportar_producao():
@@ -43,4 +43,16 @@ def exportar_producao():
 
     #wb.save(response)
     return ws
-exportar_producao()
+
+def data():
+    
+    dataInicial = date.today()
+    dataFinal = date.fromordinal(dataInicial.toordinal()+22)
+
+    qtdDias = (dataFinal - dataInicial).days
+
+    print(dataInicial)
+    print(dataFinal)
+    print(qtdDias)
+
+data()

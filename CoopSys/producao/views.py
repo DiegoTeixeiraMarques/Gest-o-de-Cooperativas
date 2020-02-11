@@ -3,6 +3,7 @@ from .models import ProducaoDiaria
 from funcionario.models import Funcionario
 from calendario.models import Calendario
 from django.contrib.auth.models import User
+from cooperativa.models import Cooperativa
 from datetime import date
 import serial
 import pdb
@@ -100,78 +101,36 @@ def pegarPeso():
 
     return (new_weight)
 
-def exportar_excel(request):
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="Funcionarios.xls"'
-
-    wb = xlwt.Workbook(encoding='utf-8')
-    ws = wb.add_sheet('Funcionarios')
-
-    # Sheet header, first row
-    row_num = 0
-
-    font_style = xlwt.XFStyle()
-    font_style.font.bold = True
-
-    columns = ['Cooperativa', 'Matricula', 'Codigo', 'Nome', 'Apelido', 'Cpf', 'Setor', 'Meta', 'Supervisor']
-
-    for col_num in range(len(columns)):
-        ws.write(row_num, col_num, columns[col_num], font_style)
-
-    # Sheet body, remaining rows
-    font_style = xlwt.XFStyle()
-
-
-
-    rows = Funcionario.objects.all().values_list('cooperativa', 'matricula', 'codigo', 'nome', 'apelido', 'cpf', 'setor', 'meta', 'supervisor')
-    for row in rows:
-        row_num += 1
-        for col_num in range(len(row)):
-            ws.write(row_num, col_num, row[col_num], font_style)
-
-    wb.save(response)
-    return response
 
 def exportar_producao2(request):
-
     response = HttpResponse(content_type='application/ms-excel')
     response['Content-Disposition'] = 'attachment; filename="Producao_do_dia.xls"'
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Lançamentos')
-
     try:
-
         # Sheet header, first row
         row_num = 0
-
         font_style = xlwt.XFStyle()
         font_style.font.bold = True
-
         columns = ['Dia', 'Funcionario', 'Producao', 'Usuario']
-
         for col_num in range(len(columns)):
             ws.write(row_num, col_num, columns[col_num], font_style)
-
         # Sheet body, remaining rows
         font_style = xlwt.XFStyle()
-
         data_atual = date.today()
         data = Calendario.objects.get(data=data_atual)
         rows = ProducaoDiaria.objects.all().filter(dia=data).values_list('dia', 'funcionario', 'producao', 'usuario')        
         rows2 = []
-
         for i in range(len(rows)):
             A = format(Calendario.objects.get(id=rows[i][0]).data, "%d/%m/%Y")
             B = Funcionario.objects.get(id=rows[i][1]).nome
             C = rows[i][2]
             D = User.objects.get(id=rows[i][3]).username
             rows2.append([A, B, C, D])
-
         for row in rows2:
             row_num += 1
             for col_num in range(len(row)):
                 ws.write(row_num, col_num, row[col_num], font_style)          
-        
         wb.save(response)
         return response
     except:    
@@ -186,39 +145,76 @@ def exportar_producao(request):
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Fechamento_mes')
 
-    try:
+    #try:
 
-        # Sheet header, first row
-        row_num = 0
+    # Sheet header, first row
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
 
-        font_style = xlwt.XFStyle()
-        font_style.font.bold = True
+    row_num = 0
+    columns = []
+    datas = []
+    dataInicial = date.today()
+    dataFinal = date.fromordinal(dataInicial.toordinal()+7)
+    qtdDias = (dataFinal - dataInicial).days
+    data = Calendario.objects.get(data=dataInicial)
 
-        columns = ['Supervisor']
+    # Acrescentando as duas primeiras colunas
+    columns.append('Funcionario')
+    columns.append('Supervisor')
+    columns.append('Empresa')
 
-        for col_num in range(len(columns)):
-            ws.write(row_num, col_num, columns[col_num], font_style)
+    # Colocando datas numa lista
+    for i in range(qtdDias):
+        datas.append(date.fromordinal(data.data.toordinal()+i))
+        columns.append(format(datas[i], "%d/%m/%Y"))
 
-        # Sheet body, remaining rows
-        font_style = xlwt.XFStyle()
+    # Colocando as datas como colunas da planilha
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
 
-        funcionarios = Funcionario.objects.all().filter(supervisor!=None).values_list('nome', 'supervisor')        
-        supervisores = []
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle() 
 
-        for i in range(len(funcionarios)):
-            if funcionarios[i][1] != None:
-                supervisores.append(funcionarios[i][1])
+    funcionarios = buscarFuncionarios()
+    funcionarios = buscarSupervisores_Empresa(funcionarios)
 
-
-        for row in funcionarios:
-            row_num += 1
-            for col_num in range(len(row)):
-                ws.write(row_num, col_num, row[col_num], font_style)          
-        
-        wb.save(response)
-        return response
+    for row in funcionarios:
+        row_num += 1
+        for col_num in range(len(row)):
+            ws.write(row_num, col_num, row[col_num], font_style)          
+    
+    wb.save(response)
+    return response
+    '''
     except:    
         print('Exceção!')
         wb.save(response)
-        return response
+        return response'''
         
+    
+def buscarFuncionarios():
+
+    """ Retornar todos os funcionarios que tem supervisor """
+    query = Funcionario.objects.all().filter().values_list('nome', 'supervisor', 'cooperativa')
+    funcionarios = []
+    for i in query:
+        if i[1] != None:
+            funcionarios.append([i[0], i[1], i[2]])
+    return funcionarios
+
+
+def buscarSupervisores_Empresa(funcionarios):
+
+    """ Substitue os id de supervidor e empresa pelos nomes de cada um """
+    for i in funcionarios:
+        supervisor = Funcionario.objects.get(id=i[1])
+        empresa = Cooperativa.objects.get(id=i[2])
+        i[1] = supervisor.nome
+        i[2] = empresa.nome
+    return funcionarios
+
+
+def buscarProducao(funcionarios, datas):
+
+    return funcionarios
