@@ -4,6 +4,7 @@ from funcionario.models import Funcionario
 from calendario.models import Calendario
 from django.contrib.auth.models import User
 from cooperativa.models import Cooperativa
+from frequencia.models import Frequencia
 from datetime import date
 import serial
 import pdb
@@ -164,7 +165,7 @@ def exportar_producao(request):
     columns.append('Funcionário')
     columns.append('Supervisor')
     columns.append('Empresa')
-    columns.append('Dias Totais')
+    columns.append('Dias Trabalhados')
     columns.append('Dias Úteis')
     columns.append('Média')
     columns.append('Efetiva')
@@ -183,7 +184,7 @@ def exportar_producao(request):
     font_style = xlwt.XFStyle() 
 
     funcionarios = buscarFuncionarios()
-    
+
     funcionarios = buscarSupervisores_Empresa(funcionarios)
     funcionarios = buscarProducoes(funcionarios, datas)
 
@@ -222,24 +223,55 @@ def buscarSupervisores_Empresa(funcionarios):
         i[3] = empresa.nome
     return funcionarios
 
+def countDiasUteis(datas):
+
+    """ Retorna quantidade de dias uteis informadas no banco baseado numa listas de datas enviadas por parâmetro """
+    totalDiasUteis = 0
+    for i in datas:
+        if Calendario.objects.get(data=i).diaUtil == 1:
+            totalDiasUteis += 1
+    return totalDiasUteis
+
+def countFaltas(datas, funcionario):
+    faltas = 0
+
+    for i in datas:
+        dia = Calendario.objects.get(data=i)
+        query = Frequencia.objects.all().filter(dia=dia, funcionario=funcionario).values_list('presenca', 'justificada')
+       
+        if query.count() > 0:
+            if query[0][0] == False and query[0][1] == False:
+                faltas += 1
+    return faltas
+
 
 def buscarProducoes(funcionarios, datas):
+    faltas = 0
+    diasUteis = countDiasUteis(datas)
+    media = 0.00
+    mediaEfetiva = 0.00
 
     for j in range(len(funcionarios)):
-        coluna = 8 # Primeira coluna referente a produção
+
         funcionario = Funcionario.objects.get(codigo=funcionarios[j][0])
+        funcionarios[j].append(diasUteis - countFaltas(datas, funcionario)) # Adiciona dias totais trabalhados
+        funcionarios[j].append(diasUteis) # Adiciona dias úteis do período
+        funcionarios[j].append(media) # Adiciona média de produção do período
+        funcionarios[j].append(mediaEfetiva) # Adiciona média efetiva de produção do perído
         for i in datas:
             dia = Calendario.objects.get(data=i)
             query = ProducaoDiaria.objects.all().filter(dia=dia, funcionario=funcionario).values_list('producao')
 
+            total = 0.00    # Acumulador de produção diária
             if query.count() != 0:
-                total = 0.00    # Acumulador de produçaõ diária
                 for m in query:
-                    total += float(m[0])
-                
+                    total += float(m[0])     
                 funcionarios[j].append(total)
-                coluna += 1     # Pula para coluna seguinte
-            coluna += 1     # Pula para coluna seguinte
-
-           
+            else:
+                funcionarios[j].append(0.00)       
     return funcionarios
+
+
+
+
+
