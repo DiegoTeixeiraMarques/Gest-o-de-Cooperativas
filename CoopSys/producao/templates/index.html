@@ -85,18 +85,22 @@
             <p>{{ data_atual }}</p>
         </div>
 
-        <div class="col-4" style="padding: 50px"> 
+        <div class="col-4" style="padding: 50px">
 
-            <button type="button" class="btn btn-info">
-                <a href="{% url 'apontarFalta' %}" style="color: black;">APONTAR FALTAS</a>    
+            <button type="button" class="btn btn-link">
+                <a href="{% url 'exportar_producao' %}" style="color: black;">EXPORTAR</a>    
             </button>
 
-            <button type="button" class="btn btn-info">
-                <a href="{% url 'exportar_producao' %}" style="color: black;">EXPORTAR</a>    
+            <button type="button" class="btn btn-danger">
+                <a href="{% url 'apontarFalta' %}" style="color: black;">FALTAS</a>    
+            </button>
+
+            <button type="button" class="btn btn-success">
+                <a href="{% url 'relatorio' %}" style="color: black;">RELATORIOS</a>    
             </button>
             
             {% if user.is_authenticated %}
-                <button type="button" class="btn btn-danger">
+                <button type="button" class="btn btn-info">
                     <a href="{% url 'logout' %}" style="color: black;">FAZER LOGOUT</a>    
                 </button>
             {% endif %}

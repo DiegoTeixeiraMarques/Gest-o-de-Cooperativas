@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Lançar produção</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+    <body>
+
+
+    <div class="row border"style="margin: 20px; padding: 10px; border-radius: 10px; background-color: green; color: white">
+        <h3 style="margin: 25px; margin-left: 450px">EMISSÃO DE RELATÓRIOS</h3>
+    </div>
+
+    <div class="row border">
+
+       
+
+    </div>
+
+    <div class="row">
+        <div class="col-8" style="padding: 50px">
+            <p>Usuário: {{ user.username }}</p>
+            <p>{{ data_atual }}</p>
+        </div>
+
+        <div class="col-4" style="padding: 50px"> 
+
+            <button type="button" class="btn btn-primary">
+                <a href="{% url 'salvarProducao' %}" style="color: black;">PRODUÇÃO</a>    
+            </button>
+
+            <button type="button" class="btn btn-danger">
+                <a href="{% url 'apontarFalta' %}" style="color: black;">FALTAS</a>    
+            </button>
+
+            {% if user.is_authenticated %}
+            <button type="button" class="btn btn-info">
+                <a href="{% url 'logout' %}" style="color: black;">FAZER LOGOUT</a>    
+            </button>
+            {% endif %}
+
+        </div>
+
+    </div>
+    </body>
+</html>

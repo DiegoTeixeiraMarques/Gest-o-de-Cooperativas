@@ -84,12 +84,16 @@
 
         <div class="col-4" style="padding: 50PX;">
 
-            <button type="button" class="btn btn-info">
-                <a href="{% url 'salvarProducao' %}" style="color: black;">VOLTAR</a>    
+            <button type="button" class="btn btn-primary">
+                <a href="{% url 'salvarProducao' %}" style="color: black;">PRODUÇÃO</a>    
+            </button>
+
+            <button type="button" class="btn btn-success">
+                <a href="{% url 'relatorio' %}" style="color: black;">RELATORIOS</a>    
             </button>
             
             {% if user.is_authenticated %}
-            <button type="button" class="btn btn-danger">
+            <button type="button" class="btn btn-info">
                 <a href="{% url 'logout' %}" style="color: black;">FAZER LOGOUT</a>    
             </button>
             {% endif %}

@@ -60,6 +60,14 @@ def index(request):
 
     return render(request, template_name, context)
 
+def relatorio(request):
+
+    template_name = 'relatorios.html'
+    context = {
+    }
+
+    return render(request, template_name, context)
+
 def pegarPeso():
 
     try:
