@@ -14,9 +14,40 @@
     </div>
 
     <div class="row border">
+        <div class="col-4">
+            <form method="POST" action="{% url 'exportar_producao' %}">
+                {% csrf_token %}
 
-       
+                <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
 
+                    <div class="row">
+                        <input id="data1" name="data1" class="form-control" type="text" placeholder="DD/MM/YYYY" autofocus style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <input id="data2" name="data2" class="form-control" type="text" placeholder="DD/MM/YYYY" style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <input id="vrPago" name="vrPago" class="form-control" type="number" placeholder="Valor pago por KG" style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <button id="botao" type="submit" class="btn btn-primary" style="margin-top: 20px">Emitir Relatório</button>
+                    </div>
+                
+                </div>
+
+            </form>
+        </div>
+
+        <div class="col-4">
+            <h1>...</h1>
+        </div>
+
+        <div class="col-4">
+            <h1>...</h1>
+        </div>     
     </div>
 
     <div class="row">
