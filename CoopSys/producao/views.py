@@ -114,7 +114,7 @@ def pegarPeso():
     return (new_weight)
 
 
-def exportar_producao2(request):
+def exportar_producao_dia(request):
     response = HttpResponse(content_type='application/ms-excel')
     response['Content-Disposition'] = 'attachment; filename="Producao_do_dia.xls"'
     wb = xlwt.Workbook(encoding='utf-8')
