@@ -5,10 +5,11 @@ from calendario.models import Calendario
 from django.contrib.auth.models import User
 from cooperativa.models import Cooperativa
 from frequencia.models import Frequencia
-from datetime import date
+from datetime import date, datetime
 import serial
 import pdb
 import xlwt
+import locale
 
 def index(request):
 
@@ -162,18 +163,17 @@ def exportar_producao(request):
         font_style = xlwt.XFStyle()
         font_style.font.bold = True
 
-        dataInicialTeste = request.POST.get('data1')
-        print(dataInicialTeste)
-        print(type(dataInicialTeste))
+        data1 = request.POST.get('data1') # Pegando data1 da pagina HTML (string)
+        data2 = request.POST.get('data2') # Pegando data2 da pagina HTML (string)
+        dataInicial = datetime.strptime(data1, '%Y-%m-%d').date() # Transformando string em datetime
+        dataFinal = datetime.strptime(data2, '%Y-%m-%d').date() # Transformando string em datetime
 
         row_num = 0
         columns = []
         datas = []
-        dataInicial = date.fromordinal(date.today().toordinal()-2)
-        dataFinal = date.fromordinal(dataInicial.toordinal()+7)
         qtdDias = (dataFinal - dataInicial).days
         data = Calendario.objects.get(data=dataInicial)
-        vrPago = 0.90
+        vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
 
         # Acrescentando as duas primeiras colunas
         columns.append('Código')
@@ -183,6 +183,7 @@ def exportar_producao(request):
         columns.append('Meta')
         columns.append('Produção Total')
         columns.append('Vr Considerado')
+        columns.append('Prêmio')
         columns.append('Dias Considerados')
         columns.append('Dias Úteis')
         columns.append('Média')
@@ -268,17 +269,28 @@ def countFaltas(datas, funcionario):
 
 
 def buscarProducoes(funcionarios, datas, vrPago):
+
+    import locale
+
+    locale.setlocale(locale.LC_ALL, 'pt_BR') 
+    # Aqui definimos que nosso local é Brasil 
+    # e isso implica a utilização do R$ para o currency
+    # além do uso do ponto para separar as casas de centenas, milhares etc
+    # e a vírgula para separar os centavos
+
     faltas = 0
     diasUteis = countDiasUteis(datas)
     media = 0.00
     mediaEfetiva = 0.00
     producaoTotal = 0.00
+    premio = 0.00
 
     for j in range(len(funcionarios)):
 
         funcionario = Funcionario.objects.get(codigo=funcionarios[j][0])
         funcionarios[j].append(producaoTotal) # Adiciona produção total do período
         funcionarios[j].append(vrPago) # Adiciona vr que será pago por kg
+        funcionarios[j].append(premio) # Adiciona premio a ser pago
         funcionarios[j].append(diasUteis - countFaltas(datas, funcionario)) # Adiciona dias totais trabalhados
         funcionarios[j].append(diasUteis) # Adiciona dias úteis do período
         funcionarios[j].append(media) # Adiciona média de produção do período
@@ -297,16 +309,18 @@ def buscarProducoes(funcionarios, datas, vrPago):
 
     # Calculando as médias
     for i in funcionarios:
-        coluna = 11
-        for j in range(len(i) - 11): # Subtrai as primeiras colunas
+        coluna = 12
+        for j in range(len(i) - 12): # Subtrai as primeiras colunas
             producaoTotal += i[coluna]
             coluna += 1
         i[5] = producaoTotal
-        i[9] = round(producaoTotal / i[8], 2) # Média de produção
-        i[10] =  round(producaoTotal / i[7], 2) # Média efetiva de produção
+        i[10] = round(producaoTotal / i[9], 2) # Média de produção
+        i[11] =  round(producaoTotal / i[8], 2) # Média efetiva de produção
+
+        i[7] = locale.currency((i[10]-float(i[4]))*i[9]*i[6], grouping=True) # Cálculo da premiação
 
         producaoTotal = 0
-
+        
     return funcionarios
 
 
