@@ -116,10 +116,10 @@ def pegarPeso():
             new_weight = "".join(new_weight)
         else:
             #print("fechado")
-            new_weight = 20
+            new_weight = 0
     except:
         #print("exceção")
-        new_weight = 20
+        new_weight = 0
     
 
     return (new_weight)
