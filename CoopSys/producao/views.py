@@ -51,13 +51,24 @@ def index(request):
         producao = ProducaoDiaria.objects.all().filter(usuario=user)[tam:]
     except:
         producao = ProducaoDiaria.objects.all().filter(usuario=user)
+    try:
 
-    template_name = 'index.html'
-    context = {
-        'producao': producao,
-        'msg': msg,
-        'data_atual': data_atual
-    }
+        template_name = 'index.html'
+        context = {
+            'producao': producao,
+            'msg': msg,
+            'data_atual': data_atual
+        }
+    except:
+        template_name = 'index.html'
+        msg = 'Erro'
+        data_atual = date.today()
+        context = {
+            'producao': producao,
+            'msg': msg,
+            'data_atual': data_atual
+        }
+
 
     return render(request, template_name, context)
 
@@ -157,6 +168,8 @@ def exportar_producao(request):
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Produtividade')
 
+    print('relatorio')
+
     try:
 
         # Sheet header, first row
@@ -165,6 +178,7 @@ def exportar_producao(request):
 
         data1 = request.POST.get('data1') # Pegando data1 da pagina HTML (string)
         data2 = request.POST.get('data2') # Pegando data2 da pagina HTML (string)
+
         dataInicial = datetime.strptime(data1, '%Y-%m-%d').date() # Transformando string em datetime
         dataFinal = datetime.strptime(data2, '%Y-%m-%d').date() # Transformando string em datetime
 
@@ -218,9 +232,9 @@ def exportar_producao(request):
         
         wb.save(response)
         return response
-    
+
     except:    
-        print('Exceção!')
+        print('Exceção 01!')
         wb.save(response)
         return response
 
@@ -314,12 +328,22 @@ def buscarProducoes(funcionarios, datas, vrPago):
             producaoTotal += i[coluna]
             coluna += 1
         i[5] = producaoTotal
-        i[10] = round(producaoTotal / i[9], 2) # Média de produção
-        i[11] =  round(producaoTotal / i[8], 2) # Média efetiva de produção
+
+        #Tratando divisão por zero
+        if i[9] == 0:
+            i[10] = 0
+        else:
+            i[10] = round(producaoTotal / i[9], 2) # Média de produção
+        if i[8] == 0:
+            i[11] = 0
+        else:
+            i[11] =  round(producaoTotal / i[8], 2) # Média efetiva de produção
 
         i[7] = locale.currency((i[10]-float(i[4]))*i[9]*i[6], grouping=True) # Cálculo da premiação
 
         producaoTotal = 0
+
+
         
     return funcionarios
 

@@ -3,7 +3,7 @@ from cooperativa.models import Cooperativa
 
 class Funcionario(models.Model):
     cooperativa = models.ForeignKey(Cooperativa, on_delete=models.CASCADE, related_name='cooperativa', verbose_name="Cooperativa", null=False, blank=False)
-    matricula = models.CharField(max_length=6, verbose_name="Matrícula", unique=True, blank=False)
+    matricula = models.CharField(max_length=6, verbose_name="Matrícula", unique=False, blank=False)
     codigo = models.CharField(max_length=8, verbose_name="Código", unique=True, blank=False)
     nome = models.CharField(max_length=50, verbose_name="Nome", null=False, blank=False)
     apelido = models.CharField(max_length=20, verbose_name="Apelido", blank=True, null=True)
