@@ -168,7 +168,7 @@ def exportar_producao(request):
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Produtividade')
 
-    print('relatorio')
+    #print('relatorio')
 
     try:
 
@@ -182,10 +182,17 @@ def exportar_producao(request):
         dataInicial = datetime.strptime(data1, '%Y-%m-%d').date() # Transformando string em datetime
         dataFinal = datetime.strptime(data2, '%Y-%m-%d').date() # Transformando string em datetime
 
+        
+
         row_num = 0
         columns = []
         datas = []
         qtdDias = (dataFinal - dataInicial).days
+
+        # Quando o relátorio é data inicial e final do mesmo dia
+        if qtdDias == 0:
+            qtdDias = 1
+            
         data = Calendario.objects.get(data=dataInicial)
         vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
 
@@ -203,10 +210,12 @@ def exportar_producao(request):
         columns.append('Média')
         columns.append('Efetiva')
         
+        print('Qtd dias:', qtdDias)
 
         # Colocando datas numa lista
         for i in range(qtdDias):
             datas.append(date.fromordinal(data.data.toordinal()+i))
+            print('Data', data)
             if datas[i].weekday() == 5:
                 columns.append('Sábado')
             elif datas[i].weekday() == 6:
@@ -228,7 +237,9 @@ def exportar_producao(request):
         for row in funcionarios:
             row_num += 1
             for col_num in range(len(row)):
-                ws.write(row_num, col_num, row[col_num], font_style)          
+                ws.write(row_num, col_num, row[col_num], font_style)
+
+    # print(funcionarios)          
         
         wb.save(response)
         return response
@@ -309,6 +320,7 @@ def buscarProducoes(funcionarios, datas, vrPago):
         funcionarios[j].append(diasUteis) # Adiciona dias úteis do período
         funcionarios[j].append(media) # Adiciona média de produção do período
         funcionarios[j].append(mediaEfetiva) # Adiciona média efetiva de produção do perído
+        print(datas)
         for i in datas:
             dia = Calendario.objects.get(data=i)
             query = ProducaoDiaria.objects.all().filter(dia=dia, funcionario=funcionario).values_list('producao')
