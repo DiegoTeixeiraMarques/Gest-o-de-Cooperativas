@@ -22,6 +22,10 @@
 
                 <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
 
+                    <div class="row" style="margin-bottom: 20px;">
+                        <input id="dataBase" name="dataBase" class="form-control" type="date" placeholder="DD/MM/YYYY">
+                    </div>
+
                     <div class="row">
                         <input id="codigo" name="codigo" class="form-control" type="text" maxlength="8" placeholder="Informe o código" autofocus>
                     </div>
@@ -81,8 +85,16 @@
 
     <div class="row">
         <div class="col-8" style="padding: 50px">
-            <p>Usuário: {{ user.username }}</p>
-            <p>{{ data_atual }}</p>
+
+        </br>
+        </br>
+            <div class="row">
+                <div class="col-6">
+                    <p><b>Data de hoje: {{ hoje }}</b></p>
+                    <p><b>Usuário: {{ user.username }}</b></p>
+                    <h6 id="dataPadrao">{{ data_base }}</h6>
+                </div>
+            </div>
         </div>
 
         <div class="col-4" style="padding: 20px">
@@ -95,9 +107,11 @@
                 <a href="{% url 'apontarFalta' %}" style="color: black;">FALTAS</a>    
             </button>
 
-            <button type="button" class="btn btn-success">
-                <a href="{% url 'relatorio' %}" style="color: black;">RELATORIOS</a>    
-            </button>
+            {% if user.username == 'admin' %}
+                <button type="button" class="btn btn-success">
+                    <a href="{% url 'relatorio' %}" style="color: black;">RELATORIOS</a>    
+                </button>
+            {% endif %}
             
             {% if user.is_authenticated %}
                 <button type="button" class="btn btn-info">
@@ -114,10 +128,13 @@
     <script>
 
         $("#botao").hide();
+        $("#dataPadrao").hide();
 
         $('#codigo').change(function () {
             $("#botao").trigger('click');    
         })
+
+        document.getElementById('dataBase').valueAsDate = new Date($("#dataPadrao").text())
 
     </script>
     </body>

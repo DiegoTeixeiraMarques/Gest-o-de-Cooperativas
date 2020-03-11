@@ -13,28 +13,25 @@ import locale
 
 def index(request):
 
-    try:
-        codigo = request.POST.get('codigo')
-        user = request.user.id
-        data_atual = date.today()
+    codigo = request.POST.get('codigo')
+    dataBase = request.POST.get('dataBase')
+    data = dataBase
+    hoje = date.today()
 
+    try:
+        user = request.user.id
         funcionario = Funcionario.objects.get(codigo=codigo)
         usuario = User.objects.get(id=user)
     except:
         msg = 'Código não localizado!'
-        data_atual = date.today()
-
     try:
         peso = pegarPeso()
     except:
         msg = 'Problema ao pegar o peso da balança!'
-
     try:
-        data = Calendario.objects.get(data=data_atual)
+        data = Calendario.objects.get(data=data)
     except:
-        msg = 'Cadastre a data de hoje no banco de dados!'
-        data_atual = date.today()
-
+        msg = 'Data não informada ou não cadastrada!'
     try:
         producaoNova = ProducaoDiaria(dia=data, funcionario=funcionario, producao=peso, usuario=usuario)
         producaoNova.save()
@@ -47,17 +44,16 @@ def index(request):
   
     try:
         tam = len(ProducaoDiaria.objects.all().filter(usuario=user)) - 5
-        #print(tam)
         producao = ProducaoDiaria.objects.all().filter(usuario=user)[tam:]
     except:
         producao = ProducaoDiaria.objects.all().filter(usuario=user)
     try:
-
         template_name = 'index.html'
         context = {
             'producao': producao,
             'msg': msg,
-            'data_atual': data_atual
+            'data_base': data,
+            'hoje': hoje
         }
     except:
         template_name = 'index.html'
@@ -66,11 +62,11 @@ def index(request):
         context = {
             'producao': producao,
             'msg': msg,
-            'data_atual': data_atual
+            'data_base': data,
+            'hoje': hoje
         }
-
-
     return render(request, template_name, context)
+    
 
 def relatorio(request):
 
@@ -135,7 +131,7 @@ def exportar_producao_dia(request):
         row_num = 0
         font_style = xlwt.XFStyle()
         font_style.font.bold = True
-        columns = ['Dia', 'Funcionario', 'Producao', 'Usuario']
+        columns = ['Dia', 'Matricula', 'Funcionario', 'Producao', 'Usuario']
         for col_num in range(len(columns)):
             ws.write(row_num, col_num, columns[col_num], font_style)
         # Sheet body, remaining rows
@@ -146,10 +142,11 @@ def exportar_producao_dia(request):
         rows2 = []
         for i in range(len(rows)):
             A = format(Calendario.objects.get(id=rows[i][0]).data, "%d/%m/%Y")
-            B = Funcionario.objects.get(id=rows[i][1]).nome
-            C = rows[i][2]
-            D = User.objects.get(id=rows[i][3]).username
-            rows2.append([A, B, C, D])
+            B = Funcionario.objects.get(id=rows[i][1]).matricula
+            C = Funcionario.objects.get(id=rows[i][1]).nome
+            D = rows[i][2]
+            E = User.objects.get(id=rows[i][3]).username
+            rows2.append([A, B, C, D, E])
         for row in rows2:
             row_num += 1
             for col_num in range(len(row)):
@@ -182,8 +179,6 @@ def exportar_producao(request):
         dataInicial = datetime.strptime(data1, '%Y-%m-%d').date() # Transformando string em datetime
         dataFinal = datetime.strptime(data2, '%Y-%m-%d').date() # Transformando string em datetime
 
-        
-
         row_num = 0
         columns = []
         datas = []
@@ -209,13 +204,10 @@ def exportar_producao(request):
         columns.append('Dias Úteis')
         columns.append('Média')
         columns.append('Efetiva')
-        
-        print('Qtd dias:', qtdDias)
 
         # Colocando datas numa lista
         for i in range(qtdDias):
             datas.append(date.fromordinal(data.data.toordinal()+i))
-            print('Data', data)
             if datas[i].weekday() == 5:
                 columns.append('Sábado')
             elif datas[i].weekday() == 6:
@@ -320,7 +312,6 @@ def buscarProducoes(funcionarios, datas, vrPago):
         funcionarios[j].append(diasUteis) # Adiciona dias úteis do período
         funcionarios[j].append(media) # Adiciona média de produção do período
         funcionarios[j].append(mediaEfetiva) # Adiciona média efetiva de produção do perído
-        print(datas)
         for i in datas:
             dia = Calendario.objects.get(data=i)
             query = ProducaoDiaria.objects.all().filter(dia=dia, funcionario=funcionario).values_list('producao')
@@ -350,13 +341,14 @@ def buscarProducoes(funcionarios, datas, vrPago):
             i[11] = 0
         else:
             i[11] =  round(producaoTotal / i[8], 2) # Média efetiva de produção
-
-        i[7] = locale.currency((i[10]-float(i[4]))*i[9]*i[6], grouping=True) # Cálculo da premiação
-
+        # Cálculo da premiação
+        x = i[10]-float(i[4])
+        if ( x*i[9]*i[6] ) > 0:
+            i[7] = locale.currency((i[10]-float(i[4]))*i[9]*i[6], grouping=True)
+        else:
+            i[7] = locale.currency(0.00, grouping=True)
         producaoTotal = 0
 
-
-        
     return funcionarios
 
 
