@@ -115,7 +115,7 @@ def pegarPeso():
             new_weight = 0
     except:
         #print("exceção")
-        new_weight = 0
+        new_weight = 35
     
 
     return (new_weight)
@@ -158,7 +158,84 @@ def exportar_producao_dia(request):
         wb.save(response)
         return response
 
+def pegarSupervisores():
+    s = Funcionario.objects.filter(supervisor__isnull = False) # Pegando todos os funcionarios que tem supervisor informado no cadastro
+    # Loop para filtrar apenas os supervisores únicos dentro de todos os funcionários encontrados no banco
+    supervisores = []
+    for i in s:
+        id = i.supervisor
+        if id not in supervisores:
+            supervisores.append(id) 
+    return supervisores
+
+def pegarProducoes(dataInicial, dataFinal):
+    # Pegando os dados de producao no intervalo de datas informadas
+    return ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).select_related('funcionario', 'dia')
+
+def pegarDatas(dataInicial, dataFinal):
+    # Criando variáveis necessárias
+    datasControl = []
+    datas = []
+    qtdDias = (dataFinal - dataInicial).days + 1 
+    data = Calendario.objects.get(data=dataInicial)
+    # Verificando de existe qtd de dias para rodar o loop
+    if qtdDias == 0:
+         qtdDias = 1
+    # Colocando datas numa lista
+    for i in range(qtdDias):
+        datasControl.append(date.fromordinal(data.data.toordinal()+i))
+        if datasControl[i].weekday() == 5:
+            datas.append('Sábado')
+        elif datasControl[i].weekday() == 6:
+            datas.append('Domingo')
+        else:
+            datas.append(format(datasControl[i], "%d/%m/%Y"))
+    return datas
+
+def criarPlanilhaSupervisor(wb, supervisor, colunas):
+    ws = wb.add_sheet(supervisor)
+    row_num = 0
+    
+    # Sheet header, first row
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    # Colocando as datas como colunas da planilha
+    for col_num in range(len(colunas)):
+        ws.write(row_num, col_num, colunas[col_num], font_style)
+
+    return ws
+
+
 def exportar_producao(request):
+
+    # Pegando datas ifnormadas na pagina HTML (string)
+    data1 = request.POST.get('data1') 
+    data2 = request.POST.get('data2')
+
+    # Transformando string em datetime
+    dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
+    dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
+
+    # Carregando os dados necessários para construção dos relatórios
+    producoes = pegarProducoes(dataInicial, dataFinal)
+    supervisores = pegarSupervisores()
+    datas = pegarDatas(dataInicial, dataFinal)
+    
+    # Cria planilha de trabalho Excel
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
+    wb = xlwt.Workbook(encoding='utf-8')
+
+    for i in range(len(supervisores)):
+        criarPlanilhaSupervisor(wb, supervisores[i].nome, datas)
+
+    
+    wb.save(response)
+    return response
+
+
+def exportar_producao1(request):
 
     response = HttpResponse(content_type='application/ms-excel')
     response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
