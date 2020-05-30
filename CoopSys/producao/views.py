@@ -40,7 +40,7 @@ def index(request):
         if codigo == None:
             msg = '...'
         else:
-            print('Erro ao salvar registro.')
+            pass
   
     try:
         tam = len(ProducaoDiaria.objects.all().filter(usuario=user)) - 5
@@ -96,7 +96,7 @@ def pegarPeso():
 
         # if True
         if _serial.isOpen():
-            print("aberto")
+            #print("aberto")
             _serial.write(__message.encode('ascii'))
             _serial.flushInput()
             weight = _serial.read(14)
@@ -154,7 +154,7 @@ def exportar_producao_dia(request):
         wb.save(response)
         return response
     except:    
-        print('Exceção!')
+        #print('Exceção!')
         wb.save(response)
         return response
 
@@ -174,8 +174,8 @@ def pegarProducoes(dataInicial, dataFinal):
 
 def pegarDatas(dataInicial, dataFinal):
     # Criando variáveis necessárias
-    datasControl = []
     datas = []
+    colunas = []
     qtdDias = (dataFinal - dataInicial).days + 1 
     data = Calendario.objects.get(data=dataInicial)
     # Verificando de existe qtd de dias para rodar o loop
@@ -183,56 +183,156 @@ def pegarDatas(dataInicial, dataFinal):
          qtdDias = 1
     # Colocando datas numa lista
     for i in range(qtdDias):
-        datasControl.append(date.fromordinal(data.data.toordinal()+i))
-        if datasControl[i].weekday() == 5:
-            datas.append('Sábado')
-        elif datasControl[i].weekday() == 6:
-            datas.append('Domingo')
-        else:
-            datas.append(format(datasControl[i], "%d/%m/%Y"))
-    return datas
+        datas.append(date.fromordinal(data.data.toordinal()+i))
+        colunas.append(format(datas[i], "%d/%m/%Y"))
+    return colunas, datas
 
-def criarPlanilhaSupervisor(wb, supervisor, colunas):
-    ws = wb.add_sheet(supervisor)
+def countDiasUteis(datas):
+
+    """ Retorna quantidade de dias uteis informadas no banco baseado numa listas de datas enviadas por parâmetro """
+    try:
+        totalDiasUteis = 0
+        for i in datas:
+            if Calendario.objects.get(data=i).diaUtil == 1:
+                totalDiasUteis += 1
+        return totalDiasUteis
+    except:
+        return 'Erro'
+
+def countFaltas(datas, funcionario):
+
+    """ Retorna quantidade de faltas de um funcionario recebido por parametro junto com o periodo """
+    try:
+        faltas = 0
+        for i in datas:
+            dia = Calendario.objects.get(data=i)
+            query = Frequencia.objects.all().filter(dia=dia, funcionario=funcionario[0]).values_list('presenca', 'justificada')
+        
+            if query.count() > 0:
+                if query[0][0] == False and query[0][1] == False:
+                    faltas += 1
+        return faltas
+    except:
+        return 'Erro'
+
+def converterLinhas(producoes, datas, supervisor):
+
+    """ Prepara a lista para ser inserida como linhas na planilha do relatório """
+    funcionarios = []
+    linhas = [] # Ex.: [ ['Nome'],['Matricula'],['data1'],['data2'], ..., ['Dias Uteis'], ['Dias Efetivos'], ['Média'], ['Efetiva'], ['Soma'] ]
+    diasUteis = countDiasUteis(datas)
+
+    for i in producoes:
+        if (i.funcionario not in funcionarios) and (i.funcionario.supervisor == supervisor):
+            funcionarios.append(i.funcionario)
+            linhas.append([i.funcionario, i.funcionario.matricula])
+
+    # linhas = [[func1], [func2], [func3], ...]
+    for i in linhas:
+        producaoDia = 0.00
+        total = 0
+        diasEfetivos = diasUteis - countFaltas(datas, i)
+        for d in datas:
+            for j in producoes:
+                if j.funcionario == i[0] and j.dia.data == d:
+                    producaoDia = producaoDia + float(j.producao) # Produção total do funcionário em cada dia
+                    total = total + float(j.producao) # Produção total do funcionario no período
+            i.append(producaoDia)
+        i.append(diasUteis) # Dias Uteis
+        i.append(diasEfetivos) # Faltas
+        if diasUteis > 0:
+            i.append(round(total / diasUteis, 2)) # Media
+        else:
+            i.append(0)
+        if diasEfetivos > 0:
+            i.append(round(total / diasEfetivos, 2)) # Efetiva
+        else:
+            i.append(0)
+        i.append(round(total, 2)) # Soma Total
+        
+    return linhas
+
+
+def criarPlanilhaSupervisor(wb, supervisor, colunas, linhas):
+    
+    #Criando variavéis necessárias
+    ws = wb.add_sheet(supervisor.nome)
     row_num = 0
     
-    # Sheet header, first row
+    # Escolhendo a fonte e deixando negrito a primeira linha (cabeçalho)
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    # Colocando as datas como colunas da planilha
+    # Add nome da coperativa na celula (A1, B1) e pula duas linhas para baixo
+    ws.write(row_num, 0, supervisor.cooperativa.nome, font_style)
+    row_num = row_num + 2
+
+    # Colocando as colunas na planilha
     for col_num in range(len(colunas)):
         ws.write(row_num, col_num, colunas[col_num], font_style)
+    
+    # Mudando o estilo da fonte para inserção das linhas na planilha
+    font_style = xlwt.XFStyle()
 
-    return ws
+    for row in linhas:
+        row_num += 1
+        for col_num in range(len(row)):
+            # Ex.: [ ['Nome'],['xxxxxx'],['xxxxxx'],['xxxxxx'], ... ]
+            if col_num == 0:
+                ws.write(row_num, col_num, row[col_num].nome, font_style)
+            # [ ['xxxxx'],['Matricula'],['xxxxxx'],['xxxxxx'], ... ]
+            elif col_num == 1:
+                ws.write(row_num, col_num, row[col_num], font_style)
+            # [ ['xxxxx'],['xxxxxx'],['data1'],['data2'], ... ]
+            else:
+                ws.write(row_num, col_num, row[col_num], font_style)
+
+    return True
 
 
 def exportar_producao(request):
 
-    # Pegando datas ifnormadas na pagina HTML (string)
-    data1 = request.POST.get('data1') 
-    data2 = request.POST.get('data2')
+    try:
+        # Pegando datas e valor informados na página HTML (string)
+        data1 = request.POST.get('data1')
+        data2 = request.POST.get('data2')
+        vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
 
-    # Transformando string em datetime
-    dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
-    dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
+        # Transformando string em datetime
+        dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
+        dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
 
-    # Carregando os dados necessários para construção dos relatórios
-    producoes = pegarProducoes(dataInicial, dataFinal)
-    supervisores = pegarSupervisores()
-    datas = pegarDatas(dataInicial, dataFinal)
-    
-    # Cria planilha de trabalho Excel
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
-    wb = xlwt.Workbook(encoding='utf-8')
+        # Carregando os dados necessários para construção dos relatórios
+        producoes = pegarProducoes(dataInicial, dataFinal)
+        supervisores = pegarSupervisores()
+        colunas, datas = pegarDatas(dataInicial, dataFinal)
 
-    for i in range(len(supervisores)):
-        criarPlanilhaSupervisor(wb, supervisores[i].nome, datas)
+        # Ex.: [ ['Nome'],['Matricula'],['data1'],['data2'], ..., ['Dias Uteis'], ['Dias Efetivos'], ['Média'], ['Efetiva'], ['Soma'] ]
+        colunas.insert(0, 'Matricula')
+        colunas.insert(0, 'Funcionario')
+        colunas.append('Dias Uteis')
+        colunas.append('Dias Efetivos')
+        colunas.append('Media')
+        colunas.append('Efetiva')
+        colunas.append('Soma')
+        
+        # Cria planilha de trabalho Excel
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
+        wb = xlwt.Workbook(encoding='utf-8')
 
-    
-    wb.save(response)
-    return response
+        for i in range(len(supervisores)):
+            linhas = converterLinhas(producoes, datas, supervisores[i])
+            criarPlanilhaSupervisor(wb, supervisores[i], colunas, linhas)
+        wb.save(response)
+        return response
+    except:
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('Produtividade')
+        wb.save(response)
+        return response
 
 
 def exportar_producao1(request):
@@ -314,7 +414,6 @@ def exportar_producao1(request):
         return response
 
     except:    
-        print('Exceção 01!')
         wb.save(response)
         return response
 
@@ -339,27 +438,6 @@ def buscarSupervisores_Empresa(funcionarios):
         i[2] = supervisor.nome
         i[3] = empresa.nome
     return funcionarios
-
-def countDiasUteis(datas):
-
-    """ Retorna quantidade de dias uteis informadas no banco baseado numa listas de datas enviadas por parâmetro """
-    totalDiasUteis = 0
-    for i in datas:
-        if Calendario.objects.get(data=i).diaUtil == 1:
-            totalDiasUteis += 1
-    return totalDiasUteis
-
-def countFaltas(datas, funcionario):
-    faltas = 0
-
-    for i in datas:
-        dia = Calendario.objects.get(data=i)
-        query = Frequencia.objects.all().filter(dia=dia, funcionario=funcionario).values_list('presenca', 'justificada')
-       
-        if query.count() > 0:
-            if query[0][0] == False and query[0][1] == False:
-                faltas += 1
-    return faltas
 
 
 def buscarProducoes(funcionarios, datas, vrPago):
