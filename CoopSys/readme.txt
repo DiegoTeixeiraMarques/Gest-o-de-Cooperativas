@@ -40,7 +40,7 @@ Instruções para conexão com BD
 			'NAME': os.environ.get('DB_NAME', 'db_teste'),
 			'USER': os.environ.get('DB_USER', 'postgres'),
 			'PASSWORD': os.environ.get('DB_PASS', '123'),
-			'HOST': '192.168.0.5',
+			'HOST': '192.168.0.5', #Em 25/06/2020 houve alteração do IP para 10.0.0.200, foi editado no arquivo pg_hba.conf e colocado a rede 10.0.0.0/24
 			'PORT': '5432',
 			}
 		}
