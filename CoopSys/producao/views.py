@@ -10,6 +10,7 @@ import serial
 import pdb
 import xlwt
 import locale
+import math
 
 def index(request):
 
@@ -178,14 +179,41 @@ def pegarDatas(dataInicial, dataFinal):
     colunas = []
     qtdDias = (dataFinal - dataInicial).days + 1 
     data = Calendario.objects.get(data=dataInicial)
-    # Verificando de existe qtd de dias para rodar o loop
+
+    # Ex.: [ ['Nome'],['Matricula'],['data1'],['data2'], ..., ['Dias Uteis'], ['Dias Efetivos'], ['Média'], ['Efetiva'], ['Soma'] ]
+    colunas.insert(0, 'Matricula')
+    colunas.insert(0, 'Funcionario')
+
+    # Verificando se existe qtd de dias para rodar o loop
     if qtdDias == 0:
          qtdDias = 1
+
+    # Verificando se intervalo de datas ultrapassa uma semana
+    if qtdDias > 7:
+        qtdSemanas = qtdDias // 7 # Quantidade de semanas
+        diasRestantes = qtdDias % 7 # Dias que sobram
+        # Montando a lista dos cabeçalhos da planilha
+        for i in range(qtdSemanas):
+            colunas.append('KG')
+            colunas.append('MEF')
+            colunas.append('MGE')
+        if diasRestantes > 0:
+            colunas.append('KG')
+            colunas.append('MEF')
+            colunas.append('MGE')
+        # Totais
+        colunas.append('ACUMULADO KG')
+        colunas.append('ACUMULADO MEF')
+        colunas.append('ACUMULADO MGE')
+        colunas.append('PREMIO R$')
+        colunas.append('DIAS UTEIS')
+        colunas.append('DIAS EFETIVOS')
+
+       
     # Colocando datas numa lista
     for i in range(qtdDias):
         datas.append(date.fromordinal(data.data.toordinal()+i))
-        colunas.append(format(datas[i], "%d/%m/%Y"))
-    return colunas, datas
+    return colunas, datas, qtdSemanas, diasRestantes
 
 def countDiasUteis(datas):
 
@@ -200,6 +228,7 @@ def countDiasUteis(datas):
         return 'Erro'
 
 def countFaltas(datas, funcionario):
+    print(datas)
 
     """ Retorna quantidade de faltas de um funcionario recebido por parametro junto com o periodo """
     try:
@@ -211,14 +240,104 @@ def countFaltas(datas, funcionario):
             if query.count() > 0:
                 if query[0][0] == False and query[0][1] == False:
                     faltas += 1
+        
         return faltas
     except:
         return 'Erro'
 
-def converterLinhas(producoes, datas, supervisor):
+def converterLinhas(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrPago):
 
     """ Prepara a lista para ser inserida como linhas na planilha do relatório """
     funcionarios = []
+    # Ex.: [ ['Nome'], ['Matricula'], ['KG'], ['MEF'], ['MGE'], ..., ['ACUMULADO KG'], ['ACUMULADO MEF'], ['ACUMULADO MGE'], ['PREMIO'], ['DIAS UTEIS'], ['DIAS EFETIVOS'] ]
+    linhas = []
+    diasUteis = countDiasUteis(datas)
+
+    # linhas = [[func1], [func2], [func3], ...]
+    for i in producoes:
+        if (i.funcionario not in funcionarios) and (i.funcionario.supervisor == supervisor):
+            funcionarios.append(i.funcionario)
+            linhas.append([i.funcionario, i.funcionario.matricula])
+
+    if (qtdSemanas == 1 and diasRestantes > 0) or (qtdSemanas > 1) :
+        datasSeparadas = [] # [[data1, ..., data7], [data1, ..., data7], [data1, data2, data3, ...]]
+
+        # Separando as datas em semanas
+        for semana in range(qtdSemanas):
+            posicao1 = semana * 7 # Pega a primeira data da semana do loop
+            posicao2 = posicao1 + 7 # Pega a última data da semana do loop
+            dias = datas[posicao1:posicao2]
+            datasSeparadas.append(dias)
+        if diasRestantes > 0:
+            dias = datas[-diasRestantes]
+            datasSeparadas.append(dias)
+    
+        # Criando linhas
+        for i in linhas:
+            diasEfetivosGeral = diasUteis - countFaltas(datas, i)
+            totalGeral = 0
+            for datasSep in datasSeparadas:
+                diasUteis = countDiasUteis(datasSep)
+                diasEfetivos = int(diasUteis) - int(countFaltas(datasSep, i))
+                totalSemana = 0
+                for d in datasSep:
+                    for j in producoes:
+                        if j.funcionario == i[0] and j.dia.data == d:
+                            totalSemana = totalSemana + float(j.producao) # Produção total do funcionário da semana no loop
+                            totalGeral = totalGeral + float(j.producao) # Produção total do período
+                    totalSemana = 0
+                i.append(totalSemana) # Kg total da semana
+                if diasEfetivos > 0:
+                    i.append(round(totalSemana / diasEfetivos, 2)) # Efetiva
+                else:
+                    i.append(0)
+                if diasUteis > 0:
+                    i.append(round(totalSemana / diasUteis, 2)) # Media
+                else:
+                    i.append(0)
+            i.append(totalGeral) # Kg total da semana
+            if diasEfetivosGeral > 0:
+                i.append(round(totalGeral / diasEfetivosGeral, 2)) # Efetiva
+            else:
+                i.append(0)
+            if diasUteisGeral > 0:
+                i.append(round(totalGeral / diasUteisGeral, 2)) # Media
+            else:
+                i.append(0)
+            i.append(totalGeral * vrPago) # Prêmio
+            i.append(diasUteisGeral)    
+
+    else:
+        for i in linhas:
+            producaoDia = 0.00
+            total = 0
+            diasEfetivos = diasUteis - countFaltas(datas, i)
+            for d in datas:
+                for j in producoes:
+                    if j.funcionario == i[0] and j.dia.data == d:
+                        producaoDia = producaoDia + float(j.producao) # Produção total do funcionário em cada dia
+                        total = total + float(j.producao) # Produção total do funcionario no período
+                i.append(producaoDia)
+                producaoDia = 0.00
+            i.append(diasUteis) # Dias Uteis
+            i.append(diasEfetivos) # Faltas
+            if diasUteis > 0:
+                i.append(round(total / diasUteis, 2)) # Media
+            else:
+                i.append(0)
+            if diasEfetivos > 0:
+                i.append(round(total / diasEfetivos, 2)) # Efetiva
+            else:
+                i.append(0)
+            i.append(round(total, 2)) # Soma Total        
+    return linhas
+
+def converterLinhasBACKUP(producoes, datas, supervisor):
+
+    """ Prepara a lista para ser inserida como linhas na planilha do relatório """
+    funcionarios = []
+
+    # Ex.: [ ['Nome'], ['Matricula'], ['KG'], ['MEF'], ['MGE'], ..., ['ACUMULADO KG'], ['ACUMULADO MEF'], ['ACUMULADO MGE'], ['PREMIO'], ['DIAS UTEIS'], ['DIAS EFETIVOS'] ]
     linhas = [] # Ex.: [ ['Nome'],['Matricula'],['data1'],['data2'], ..., ['Dias Uteis'], ['Dias Efetivos'], ['Média'], ['Efetiva'], ['Soma'] ]
     diasUteis = countDiasUteis(datas)
 
@@ -238,6 +357,7 @@ def converterLinhas(producoes, datas, supervisor):
                     producaoDia = producaoDia + float(j.producao) # Produção total do funcionário em cada dia
                     total = total + float(j.producao) # Produção total do funcionario no período
             i.append(producaoDia)
+            producaoDia = 0.00
         i.append(diasUteis) # Dias Uteis
         i.append(diasEfetivos) # Faltas
         if diasUteis > 0:
@@ -248,9 +368,9 @@ def converterLinhas(producoes, datas, supervisor):
             i.append(round(total / diasEfetivos, 2)) # Efetiva
         else:
             i.append(0)
-        i.append(round(total, 2)) # Soma Total
-        
+        i.append(round(total, 2)) # Soma Total        
     return linhas
+
 
 
 def criarPlanilhaSupervisor(wb, supervisor, colunas, linhas):
@@ -289,51 +409,40 @@ def criarPlanilhaSupervisor(wb, supervisor, colunas, linhas):
 
     return True
 
-
 def exportar_producao(request):
 
-    try:
-        # Pegando datas e valor informados na página HTML (string)
-        data1 = request.POST.get('data1')
-        data2 = request.POST.get('data2')
-        vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
+    #try:
+    # Pegando datas e valor informados na página HTML (string)
+    data1 = request.POST.get('data1')
+    data2 = request.POST.get('data2')
+    vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
 
-        # Transformando string em datetime
-        dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
-        dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
+    # Transformando string em datetime
+    dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
+    dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
 
-        # Carregando os dados necessários para construção dos relatórios
-        producoes = pegarProducoes(dataInicial, dataFinal)
-        supervisores = pegarSupervisores()
-        colunas, datas = pegarDatas(dataInicial, dataFinal)
+    # Carregando os dados necessários para construção dos relatórios
+    producoes = pegarProducoes(dataInicial, dataFinal)
+    supervisores = pegarSupervisores()
+    colunas, datas, qtdSemanas, diasRestantes = pegarDatas(dataInicial, dataFinal)
+    
+    # Cria planilha de trabalho Excel
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao Semanal.xls"'
+    wb = xlwt.Workbook(encoding='utf-8')
 
-        # Ex.: [ ['Nome'],['Matricula'],['data1'],['data2'], ..., ['Dias Uteis'], ['Dias Efetivos'], ['Média'], ['Efetiva'], ['Soma'] ]
-        colunas.insert(0, 'Matricula')
-        colunas.insert(0, 'Funcionario')
-        colunas.append('Dias Uteis')
-        colunas.append('Dias Efetivos')
-        colunas.append('Media')
-        colunas.append('Efetiva')
-        colunas.append('Soma')
-        
-        # Cria planilha de trabalho Excel
-        response = HttpResponse(content_type='application/ms-excel')
-        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
-        wb = xlwt.Workbook(encoding='utf-8')
-
-        for i in range(len(supervisores)):
-            linhas = converterLinhas(producoes, datas, supervisores[i])
-            criarPlanilhaSupervisor(wb, supervisores[i], colunas, linhas)
-        wb.save(response)
-        return response
-    except:
-        response = HttpResponse(content_type='application/ms-excel')
-        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
-        wb = xlwt.Workbook(encoding='utf-8')
-        ws = wb.add_sheet('Produtividade')
-        wb.save(response)
-        return response
-
+    for i in range(len(supervisores)):
+        linhas = converterLinhas(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago)
+        criarPlanilhaSupervisor(wb, supervisores[i], colunas, linhas)
+    wb.save(response)
+    return response
+   # except:
+        #response = HttpResponse(content_type='application/ms-excel')
+        #response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
+        #wb = xlwt.Workbook(encoding='utf-8')
+        #ws = wb.add_sheet('Produtividade')
+        #wb.save(response)
+        #return response
 
 def exportar_producao1(request):
 
