@@ -21,7 +21,7 @@
                 
 
                 <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
-                    <h2>Produtividade e Premiação</h2>
+                    <h4>Produtividade e Premiação (Diária)</h4>
 
                     <div class="row">
                         <input id="data1" name="data1" class="form-control" type="date" placeholder="DD/MM/YYYY" autofocus style="margin-top: 20px">
@@ -45,12 +45,60 @@
         </div>
 
         <div class="col-4">
-            <h1></h1>
+            
+            <form method="POST" action="{% url 'exportar_producao' %}">
+                {% csrf_token %}
+                
+
+                <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
+                    <h4>Produtividade e Premiação (Semanal)</h4>
+
+                    <div class="row">
+                        <input id="data1" name="data3" class="form-control" type="date" placeholder="DD/MM/YYYY" autofocus style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <input id="data2" name="data4" class="form-control" type="date" placeholder="DD/MM/YYYY" style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <input id="vrPago" name="vrPago" class="form-control" type="number" step="any" placeholder="Valor (R$) pago por KG" style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <button id="botao" type="submit" class="btn btn-primary" style="margin-top: 20px">Emitir Relatório</button>
+                    </div>
+                
+                </div>
+
+            </form>
         </div>
 
         <div class="col-4">
-            <h1></h1>
-        </div>     
+            
+            <form method="POST" action="{% url 'exportar_producao' %}">
+                {% csrf_token %}
+                
+
+                <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
+                    <h4>Relatório dos Supervisores</h4>
+
+                    <div class="row">
+                        <input id="data1" name="data5" class="form-control" type="date" placeholder="DD/MM/YYYY" autofocus style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <input id="data2" name="data6" class="form-control" type="date" placeholder="DD/MM/YYYY" style="margin-top: 20px">
+                    </div>
+
+                    <div class="row">
+                        <button id="botao" type="submit" class="btn btn-primary" style="margin-top: 20px">Emitir Relatório</button>
+                    </div>
+                
+                </div>
+
+            </form>
+        </div>    
     </div>
 
     <div class="row">
