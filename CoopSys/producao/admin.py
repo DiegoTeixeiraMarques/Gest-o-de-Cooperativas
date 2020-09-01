@@ -5,7 +5,7 @@ class ProducaoDiariaAdmin(admin.ModelAdmin):
     fields = ['funcionario', 'dia', 'producao', 'usuario']
     list_display = ['funcionario', 'matricula', 'dia', 'producao', 'usuario']  # Campos que aparecem na listagem dos objetos no admin
     #search_fields = ['search_funcionario'] # Campos pesquisáveis no admin
-    list_filter = ['funcionario', 'dia', 'producao', 'usuario']
+    list_filter = ['funcionario', 'dia', 'dia__data', 'producao', 'usuario']
 
     #class Media:
      #   js = ('//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js',

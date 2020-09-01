@@ -16,23 +16,23 @@
     <div class="row border">
         <div>
             
-            <form method="POST" id="form1" action="{% url 'exportar_producao_semanal' %}">
+            <form method="POST" id="form1" action="{% url 'exportar_producao_diadia' %}">
                 {% csrf_token %}
                 
 
                 <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
-                    <h4>Produtividade e Premiação (Semanal)</h4>
+                    <h4>Produtividade e Premiação (Diário)</h4>
 
                     <div class="row">
-                        <input id="data1" name="data1" class="form-control" type="date" placeholder="DD/MM/YYYY" autofocus style="margin-top: 20px">
+                        <input id="data3" name="data3" class="form-control" type="date" placeholder="DD/MM/YYYY" autofocus style="margin-top: 20px">
                     </div>
 
                     <div class="row">
-                        <input id="data2" name="data2" class="form-control" type="date" placeholder="DD/MM/YYYY" style="margin-top: 20px">
+                        <input id="data3" name="data4" class="form-control" type="date" placeholder="DD/MM/YYYY" style="margin-top: 20px">
                     </div>
 
                     <div class="row">
-                        <input id="vrPago" name="vrPago" class="form-control" type="number" step="any" placeholder="Valor (R$) pago por KG" style="margin-top: 20px">
+                        <input id="vrPago1" name="vrPago1" class="form-control" type="number" step="any" placeholder="Valor (R$) pago por KG" style="margin-top: 20px">
                     </div>
 
                     <input type="hidden" name="action" value="Semanal">
@@ -51,8 +51,8 @@
 
     <div class="row">
         <div class="col-8" style="padding: 50px">
-            <p><b>Usuário: {{ user.username }}</b></p>
-            <p><b>{{ data_atual }}</b></p>
+            <p>Usuário: {{ user.username }}</p>
+            <p>{{ data_atual }}</p>
         </div>
 
         <div class="col-4" style="padding: 20px"> 
@@ -60,11 +60,13 @@
             <button type="button" class="btn btn-primary">
                 <a href="{% url 'salvarProducao' %}" style="color: black;">PRODUÇÃO</a>    
             </button>
-<!--
-            <button type="button" class="btn btn-success">
-                <a href="{% url 'relatoriodiadia' %}" style="color: black;">RELATORIO DIADIA</a>    
-            </button>
--->
+
+            {% if user.username == 'admin' %}
+                <button type="button" class="btn btn-success">
+                    <a href="{% url 'relatorio' %}" style="color: black;">RELATORIO SEMANAL</a>    
+                </button>
+            {% endif %}
+
             {% if user.is_authenticated %}
             <button type="button" class="btn btn-info">
                 <a href="{% url 'logout' %}" style="color: black;">FAZER LOGOUT</a>    

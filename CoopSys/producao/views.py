@@ -79,6 +79,16 @@ def relatorio(request):
 
     return render(request, template_name, context)
 
+def relatoriodiadia(request):
+
+    template_name = 'relatorioSupervisor.html'
+    data_atual = date.today()
+    context = {
+        'data_atual': data_atual
+    }
+
+    return render(request, template_name, context)
+
 def pegarPeso():
 
     try:
@@ -132,7 +142,7 @@ def exportar_producao_dia(request):
         row_num = 0
         font_style = xlwt.XFStyle()
         font_style.font.bold = True
-        columns = ['Dia', 'Matricula', 'Funcionario', 'Producao', 'Usuario']
+        columns = ['Dia', 'Matricula', 'Funcionario', 'Producao', 'Usuario', 'Unidade']
         for col_num in range(len(columns)):
             ws.write(row_num, col_num, columns[col_num], font_style)
         # Sheet body, remaining rows
@@ -147,7 +157,8 @@ def exportar_producao_dia(request):
             C = Funcionario.objects.get(id=rows[i][1]).nome
             D = rows[i][2]
             E = User.objects.get(id=rows[i][3]).username
-            rows2.append([A, B, C, D, E])
+            F = Funcionario.objects.get(id=rows[i][1]).cooperativa.nome
+            rows2.append([A, B, C, D, E, F])
         for row in rows2:
             row_num += 1
             for col_num in range(len(row)):
@@ -173,7 +184,7 @@ def pegarProducoes(dataInicial, dataFinal):
     # Pegando os dados de producao no intervalo de datas informadas
     return ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).select_related('funcionario', 'dia')
 
-def pegarDatas(dataInicial, dataFinal):
+def pegarDatasSemanal(dataInicial, dataFinal):
     # Criando variáveis necessárias
     datas = []
     colunas = []
@@ -204,12 +215,12 @@ def pegarDatas(dataInicial, dataFinal):
             colunas.append('MEF')
             colunas.append('MGE')
         # Totais
-        colunas.append('ACUMULADO KG')
-        colunas.append('ACUMULADO MEF')
-        colunas.append('ACUMULADO MGE')
+        colunas.append('KG')
+        colunas.append('M.EF.')
+        colunas.append('M.GE.')
         colunas.append('PREMIO R$')
-        colunas.append('DIAS UTEIS')
-        colunas.append('DIAS EFETIVOS')
+        colunas.append('DIAS MEF')
+        colunas.append('DIAS MGE')
 
     # Colocando datas numa lista
     for i in range(qtdDias):
@@ -228,7 +239,7 @@ def countDiasUteis(datas):
     except:
         return 'Erro'
 
-def countFaltas(datas, funcionario):
+def countFaltasSemanal(datas, funcionario):
 
     """ Retorna quantidade de faltas de um funcionario recebido por parametro junto com o periodo """
     try:
@@ -238,22 +249,51 @@ def countFaltas(datas, funcionario):
             query = Frequencia.objects.all().filter(dia=dia, funcionario=funcionario[0]).values_list('presenca', 'justificada')
         
             if query.count() > 0:
-                if query[0][0] == False and query[0][1] == False:
+                if query[0][0] == False and query[0][1] == False: # Faltas não justificadas
                     faltas += 1
         
         return faltas
     except:
         return 'Erro'
 
-def converterLinhas(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrPago):
+def countTodasFaltas(datas, funcionario):
+
+    """ Retorna quantidade de faltas de um funcionario recebido por parametro junto com o periodo """
+    try:
+        faltas = 0
+        for i in datas:
+            dia = Calendario.objects.get(data=i)
+            query = Frequencia.objects.all().filter(dia=dia, funcionario=funcionario[0]).values_list('presenca', 'justificada')
+        
+            if query.count() > 0:
+                if query[0][0] == False: #and query[0][1] == True
+                    faltas += 1
+        
+        return faltas
+    except:
+        return 'Erro'
+
+def countFaltas(datas, funcionario):
+    faltas = 0
+
+    for i in datas:
+        dia = Calendario.objects.get(data=i)
+        query = Frequencia.objects.all().filter(dia=dia, funcionario=funcionario).values_list('presenca', 'justificada')
+       
+        if query.count() > 0:
+            if query[0][0] == False and query[0][1] == False:
+                faltas += 1
+    return faltas
+
+def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrPago):
 
     """ Prepara a lista para ser inserida como linhas na planilha do relatório """
 
     funcionarios = []
     # Ex.: [ ['Nome'], ['Matricula'], ['KG'], ['MEF'], ['MGE'], ..., ['ACUMULADO KG'], ['ACUMULADO MEF'], ['ACUMULADO MGE'], ['PREMIO'], ['DIAS UTEIS'], ['DIAS EFETIVOS'] ]
     linhas = []
-    diasUteisGeral = countDiasUteis(datas)
     datasSeparadas = datas
+    diasUteisGeral = countDiasUteis(datas)
 
     # linhas = [[func1], [func2], [func3], ...]
     for i in producoes:
@@ -279,11 +319,13 @@ def converterLinhas(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrP
     
         # Criando linhas
         for i in linhas:
-            diasEfetivosGeral = diasUteisGeral - countFaltas(datas, i)
+            diasEfetivosGeral = diasUteisGeral - countTodasFaltas(datas, i) # F - Para calculo da media efetiva
+            diasMediaGeral = diasUteisGeral - countFaltasSemanal(datas, i) # E - Para calculo da media geral, faltas não justificadas
             totalGeral = 0
             for datasSep in datasSeparadas:
                 diasUteis = countDiasUteis(datasSep)
-                diasEfetivos = int(diasUteis) - int(countFaltas(datasSep, i))
+                diasEfetivos = int(diasUteis) - int(countTodasFaltas(datasSep, i)) # F, Todas as faltas, para calculo da media efetiva
+                diasMedia = int(diasUteis) - int(countFaltasSemanal(datasSep, i)) # E - Para calculo da media geral, faltas não justificadas
                 totalSemana = 0
                 for d in datasSep:
                     for j in producoes:
@@ -293,31 +335,34 @@ def converterLinhas(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrP
                 
                 i.append(totalSemana) # Kg total da semana
                 if diasEfetivos > 0:
-                    i.append(round(totalSemana / diasEfetivos, 2)) # Efetiva
+                    i.append(round(totalSemana / diasEfetivos, 2)) # Efetiva Semana
                 else:
                     i.append(0)
-                if diasUteis > 0:
-                    i.append(round(totalSemana / diasUteis, 2)) # Media
+                if diasMedia > 0:
+                    i.append(round(totalSemana / diasMedia, 2)) # Media Semana
                 else:
                     i.append(0)
             i.append(totalGeral) # Kg total da semana
             if diasEfetivosGeral > 0:
-                i.append(round(totalGeral / diasEfetivosGeral, 2)) # Efetiva
+                i.append(round(totalGeral / diasEfetivosGeral, 2)) # Efetiva Mes
             else:
                 i.append(0)
-            if diasUteisGeral > 0:
-                i.append(round(totalGeral / diasUteisGeral, 2)) # Media
+            if diasMediaGeral > 0:
+                i.append(round(totalGeral / diasMediaGeral, 2)) # Media Mes
             else:
                 i.append(0)
-            i.append(totalGeral * vrPago) # Prêmio
-            i.append(diasUteisGeral)
-            i.append(diasEfetivosGeral)
+            mediaGeral = round(totalGeral / diasMediaGeral, 2)
+            premio = (float(mediaGeral) - float(i[0].meta)) * diasMediaGeral * vrPago # Calculo do premio
+            i.append(premio) # Prêmio
+            i.append(diasEfetivosGeral) # Para media efetiva, dias uteis menos todas as faltas
+            i.append(diasMediaGeral) # Para media geral, dias uteis menos faltas nao justificadas
     else:
         for i in linhas:
             producaoDia = 0.00
             total = 0
             diasUteis = countDiasUteis(datas)
-            diasEfetivos = diasUteis - countFaltas(datas, i)
+            diasEfetivos = int(diasUteis) - int(countTodasFaltas(datas, i)) # F, Todas as faltas, para calculo da media efetiva
+            diasMedia = int(diasUteis) - int(countFaltasSemanal(datas, i)) # E - Para calculo da media geral, faltas não justificadas
             for d in datas:
                 for j in producoes:
                     if j.funcionario == i[0] and j.dia.data == d:
@@ -327,8 +372,8 @@ def converterLinhas(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrP
                 producaoDia = 0.00
             i.append(diasUteis) # Dias Uteis
             i.append(diasEfetivos) # Faltas
-            if diasUteis > 0:
-                i.append(round(total / diasUteis, 2)) # Media
+            if diasMedia > 0:
+                i.append(round(total / diasMedia, 2)) # Media Geral
             else:
                 i.append(0)
             if diasEfetivos > 0:
@@ -338,48 +383,7 @@ def converterLinhas(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrP
             i.append(round(total, 2)) # Soma Total
     return linhas, datasSeparadas
 
-def converterLinhasBACKUP(producoes, datas, supervisor):
-
-    """ Prepara a lista para ser inserida como linhas na planilha do relatório """
-    funcionarios = []
-
-    # Ex.: [ ['Nome'], ['Matricula'], ['KG'], ['MEF'], ['MGE'], ..., ['ACUMULADO KG'], ['ACUMULADO MEF'], ['ACUMULADO MGE'], ['PREMIO'], ['DIAS UTEIS'], ['DIAS EFETIVOS'] ]
-    linhas = [] # Ex.: [ ['Nome'],['Matricula'],['data1'],['data2'], ..., ['Dias Uteis'], ['Dias Efetivos'], ['Média'], ['Efetiva'], ['Soma'] ]
-    diasUteis = countDiasUteis(datas)
-
-    for i in producoes:
-        if (i.funcionario not in funcionarios) and (i.funcionario.supervisor == supervisor):
-            funcionarios.append(i.funcionario)
-            linhas.append([i.funcionario, i.funcionario.matricula])
-
-    # linhas = [[func1], [func2], [func3], ...]
-    for i in linhas:
-        producaoDia = 0.00
-        total = 0
-        diasEfetivos = diasUteis - countFaltas(datas, i)
-        for d in datas:
-            for j in producoes:
-                if j.funcionario == i[0] and j.dia.data == d:
-                    producaoDia = producaoDia + float(j.producao) # Produção total do funcionário em cada dia
-                    total = total + float(j.producao) # Produção total do funcionario no período
-            i.append(producaoDia)
-            producaoDia = 0.00
-        i.append(diasUteis) # Dias Uteis
-        i.append(diasEfetivos) # Faltas
-        if diasUteis > 0:
-            i.append(round(total / diasUteis, 2)) # Media
-        else:
-            i.append(0)
-        if diasEfetivos > 0:
-            i.append(round(total / diasEfetivos, 2)) # Efetiva
-        else:
-            i.append(0)
-        i.append(round(total, 2)) # Soma Total        
-    return linhas
-
-
-
-def criarPlanilhaSupervisor(wb, supervisor, colunas, linhas, datasSeparadas):
+def criarPlanilhaSupervisorSemanal(wb, supervisor, colunas, linhas, datasSeparadas):
     
     #Criando variavéis necessárias
     ws = wb.add_sheet(supervisor.nome)
@@ -389,8 +393,9 @@ def criarPlanilhaSupervisor(wb, supervisor, colunas, linhas, datasSeparadas):
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    # Add nome da coperativa na celula (A1, B1) e pula duas linhas para baixo
+    # Add nome da cooperativa na celula (A1, B1) e pula duas linhas para baixo
     ws.write(row_num, 0, supervisor.cooperativa.nome, font_style)
+    ws.write(row_num+1, 0, supervisor.nome, font_style)
     row_num += 2
 
     # Colocando intervalo de datas nas colunas da planilha [[01/01 a 07/01], [08/01 as 14/01]]
@@ -427,7 +432,7 @@ def criarPlanilhaSupervisor(wb, supervisor, colunas, linhas, datasSeparadas):
                 ws.write(row_num, col_num, row[col_num], font_style)
     return True
 
-def exportar_producao(request):
+def exportar_producao_semanal(request):
 
     try:
         # Pegando datas e valor informados na página HTML (string)
@@ -442,16 +447,16 @@ def exportar_producao(request):
         # Carregando os dados necessários para construção dos relatórios
         producoes = pegarProducoes(dataInicial, dataFinal)
         supervisores = pegarSupervisores()
-        colunas, datas, qtdSemanas, diasRestantes = pegarDatas(dataInicial, dataFinal)
-        
+        colunas, datas, qtdSemanas, diasRestantes = pegarDatasSemanal(dataInicial, dataFinal)
+
         # Cria planilha de trabalho Excel
         response = HttpResponse(content_type='application/ms-excel')
         response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao Semanal.xls"'
         wb = xlwt.Workbook(encoding='utf-8')
 
         for i in range(len(supervisores)):
-            linhas, datasSeparadas = converterLinhas(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago)
-            criarPlanilhaSupervisor(wb, supervisores[i], colunas, linhas, datasSeparadas)
+            linhas, datasSeparadas = converterLinhasSemanal(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago)
+            criarPlanilhaSupervisorSemanal(wb, supervisores[i], colunas, linhas, datasSeparadas)
         wb.save(response)
         return response
     except:
@@ -461,21 +466,113 @@ def exportar_producao(request):
         ws = wb.add_sheet('Produtividade')
         wb.save(response)
         return response
+    
+def buscarFuncionarios():
 
-def exportar_producao1(request):
+    """ Retornar todos os funcionarios que tem supervisor """
+    query = Funcionario.objects.all().filter().values_list('codigo', 'nome', 'supervisor', 'cooperativa', 'meta')
+    funcionarios = []
+    for i in query:
+        if i[2] != None:
+            funcionarios.append([i[0], i[1], i[2], i[3], i[4]]) # codigo, nome, supervisor, empresa, meta
+    return funcionarios
+
+
+def buscarSupervisores_Empresa(funcionarios):
+
+    """ Substitue os id de supervidor e empresa pelos nomes de cada um """
+    for i in funcionarios:
+        supervisor = Funcionario.objects.get(id=i[2])
+        empresa = Cooperativa.objects.get(id=i[3])
+        i[2] = supervisor.nome
+        i[3] = empresa.nome
+    return funcionarios
+
+
+def buscarProducoes(funcionarios, datas, vrPago):
+    locale.setlocale(locale.LC_ALL, 'pt_BR') 
+    # Aqui definimos que nosso local é Brasil 
+    # e isso implica a utilização do R$ para o currency
+    # além do uso do ponto para separar as casas de centenas, milhares etc
+    # e a vírgula para separar os centavos
+
+    faltas = 0
+    diasUteis = countDiasUteis(datas)
+    media = 0.00
+    mediaEfetiva = 0.00
+    producaoTotal = 0.00
+    premio = 0.00
+
+    for j in range(len(funcionarios)):
+
+        funcionario = Funcionario.objects.get(codigo=funcionarios[j][0])
+        funcionarios[j].append(producaoTotal) # Adiciona produção total do período
+        funcionarios[j].append(vrPago) # Adiciona vr que será pago por kg
+        funcionarios[j].append(premio) # Adiciona premio a ser pago
+
+        faltas = countFaltas(datas, funcionario)
+
+        funcionarios[j].append(diasUteis - faltas) # Adiciona dias totais trabalhados
+        funcionarios[j].append(diasUteis) # Adiciona dias úteis do período
+        funcionarios[j].append(media) # Adiciona média de produção do período
+        funcionarios[j].append(mediaEfetiva) # Adiciona média efetiva de produção do perído
+        for i in datas:
+            dia = Calendario.objects.get(data=i)
+            query = ProducaoDiaria.objects.all().filter(dia=dia, funcionario=funcionario).values_list('producao')
+
+            total = 0.00    # Acumulador de produção diária
+            if query.count() != 0:
+                for m in query:
+                    total += float(m[0])     
+                funcionarios[j].append(total)
+            else:
+                funcionarios[j].append(0.00)
+
+    # Calculando as médias
+    for i in funcionarios:
+        coluna = 12
+        for j in range(len(i) - 12): # Subtrai as primeiras colunas
+            producaoTotal += i[coluna]
+            coluna += 1
+        i[5] = producaoTotal
+
+        #Tratando divisão por zero
+        if i[9] == 0:
+            i[10] = 0
+        else:
+            i[10] = round(producaoTotal / i[9], 2) # Média de produção
+        if i[8] == 0:
+            i[11] = 0
+        else:
+            i[11] =  round(producaoTotal / i[8], 2) # Média efetiva de produção
+        # Cálculo da premiação
+        x = i[10]-float(i[4])
+        if ( x*i[9]*i[6] ) > 0:
+            i[7] = locale.currency((i[10]-float(i[4]))*i[9]*i[6], grouping=True)
+        else:
+            i[7] = locale.currency(0.00, grouping=True)
+        producaoTotal = 0
+
+    return funcionarios
+
+
+### Produção dia a dia
+
+def exportar_producao_diadia(request):
 
     response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
+    response['Content-Disposition'] = 'attachment; filename="Prod dia a dia.xls"'
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Produtividade')
+
     try:
 
         # Sheet header, first row
         font_style = xlwt.XFStyle()
         font_style.font.bold = True
 
-        data1 = request.POST.get('data1') # Pegando data1 da pagina HTML (string)
-        data2 = request.POST.get('data2') # Pegando data2 da pagina HTML (string)
+        data1 = request.POST.get('data3') # Pegando data1 da pagina HTML (string)
+        data2 = request.POST.get('data4') # Pegando data2 da pagina HTML (string)
 
         dataInicial = datetime.strptime(data1, '%Y-%m-%d').date() # Transformando string em datetime
         dataFinal = datetime.strptime(data2, '%Y-%m-%d').date() # Transformando string em datetime
@@ -490,7 +587,7 @@ def exportar_producao1(request):
             qtdDias = 1
             
         data = Calendario.objects.get(data=dataInicial)
-        vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
+        vrPago = float(request.POST.get('vrPago1')) # Pegando valor da pagina HTML
 
         # Acrescentando as duas primeiras colunas
         columns.append('Código')
@@ -536,99 +633,6 @@ def exportar_producao1(request):
         return response
 
     except:    
+        print('Exceção 01!')
         wb.save(response)
         return response
-
-    
-def buscarFuncionarios():
-
-    """ Retornar todos os funcionarios que tem supervisor """
-    query = Funcionario.objects.all().filter().values_list('codigo', 'nome', 'supervisor', 'cooperativa', 'meta')
-    funcionarios = []
-    for i in query:
-        if i[2] != None:
-            funcionarios.append([i[0], i[1], i[2], i[3], i[4]]) # codigo, nome, supervisor, empresa, meta
-    return funcionarios
-
-
-def buscarSupervisores_Empresa(funcionarios):
-
-    """ Substitue os id de supervidor e empresa pelos nomes de cada um """
-    for i in funcionarios:
-        supervisor = Funcionario.objects.get(id=i[2])
-        empresa = Cooperativa.objects.get(id=i[3])
-        i[2] = supervisor.nome
-        i[3] = empresa.nome
-    return funcionarios
-
-
-def buscarProducoes(funcionarios, datas, vrPago):
-
-    import locale
-
-    locale.setlocale(locale.LC_ALL, 'pt_BR') 
-    # Aqui definimos que nosso local é Brasil 
-    # e isso implica a utilização do R$ para o currency
-    # além do uso do ponto para separar as casas de centenas, milhares etc
-    # e a vírgula para separar os centavos
-
-    faltas = 0
-    diasUteis = countDiasUteis(datas)
-    media = 0.00
-    mediaEfetiva = 0.00
-    producaoTotal = 0.00
-    premio = 0.00
-
-    for j in range(len(funcionarios)):
-
-        funcionario = Funcionario.objects.get(codigo=funcionarios[j][0])
-        funcionarios[j].append(producaoTotal) # Adiciona produção total do período
-        funcionarios[j].append(vrPago) # Adiciona vr que será pago por kg
-        funcionarios[j].append(premio) # Adiciona premio a ser pago
-        funcionarios[j].append(diasUteis - countFaltas(datas, funcionario)) # Adiciona dias totais trabalhados
-        funcionarios[j].append(diasUteis) # Adiciona dias úteis do período
-        funcionarios[j].append(media) # Adiciona média de produção do período
-        funcionarios[j].append(mediaEfetiva) # Adiciona média efetiva de produção do perído
-        for i in datas:
-            dia = Calendario.objects.get(data=i)
-            query = ProducaoDiaria.objects.all().filter(dia=dia, funcionario=funcionario).values_list('producao')
-
-            total = 0.00    # Acumulador de produção diária
-            if query.count() != 0:
-                for m in query:
-                    total += float(m[0])     
-                funcionarios[j].append(total)
-            else:
-                funcionarios[j].append(0.00)
-
-    # Calculando as médias
-    for i in funcionarios:
-        coluna = 12
-        for j in range(len(i) - 12): # Subtrai as primeiras colunas
-            producaoTotal += i[coluna]
-            coluna += 1
-        i[5] = producaoTotal
-
-        #Tratando divisão por zero
-        if i[9] == 0:
-            i[10] = 0
-        else:
-            i[10] = round(producaoTotal / i[9], 2) # Média de produção
-        if i[8] == 0:
-            i[11] = 0
-        else:
-            i[11] =  round(producaoTotal / i[8], 2) # Média efetiva de produção
-        # Cálculo da premiação
-        x = i[10]-float(i[4])
-        if ( x*i[9]*i[6] ) > 0:
-            i[7] = locale.currency((i[10]-float(i[4]))*i[9]*i[6], grouping=True)
-        else:
-            i[7] = locale.currency(0.00, grouping=True)
-        producaoTotal = 0
-
-    return funcionarios
-
-
-
-
-

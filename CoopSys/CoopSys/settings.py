@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'frequencia',
     'funcionario',
     'producao',
+    'remuneracao',
 ]
 
 MIDDLEWARE = [
