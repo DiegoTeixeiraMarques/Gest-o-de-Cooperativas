@@ -5,6 +5,7 @@ from calendario.models import Calendario
 from django.contrib.auth.models import User
 from cooperativa.models import Cooperativa
 from frequencia.models import Frequencia
+from remuneracao.models import Remuneracao
 from datetime import date, datetime
 import serial
 import pdb
@@ -285,7 +286,7 @@ def countFaltas(datas, funcionario):
                 faltas += 1
     return faltas
 
-def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrPago):
+def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrPago, remuneracoes):
 
     """ Prepara a lista para ser inserida como linhas na planilha do relatório """
 
@@ -294,6 +295,13 @@ def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestant
     linhas = []
     datasSeparadas = datas
     diasUteisGeral = countDiasUteis(datas)
+
+    # Para calculo do prêmio da Fiscal
+    totalEquipe = 0
+    mediaEquipe = 0
+    salarioFiscal = float(supervisor.salario)
+    salarioEncarregada = float(Funcionario.objects.get(funcao = 'E').salario)
+    qtdFuncionarios = 0
 
     # linhas = [[func1], [func2], [func3], ...]
     for i in producoes:
@@ -353,9 +361,38 @@ def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestant
                 i.append(0)
             mediaGeral = round(totalGeral / diasMediaGeral, 2)
             premio = (float(mediaGeral) - float(i[0].meta)) * diasMediaGeral * vrPago # Calculo do premio
-            i.append(premio) # Prêmio
+            if premio < 0:
+                i.append(0.00)
+            else:
+                i.append(premio) # Prêmio
             i.append(diasEfetivosGeral) # Para media efetiva, dias uteis menos todas as faltas
             i.append(diasMediaGeral) # Para media geral, dias uteis menos faltas nao justificadas
+
+            # Cálculo da premiação fiscal
+            totalEquipe = totalEquipe + totalGeral
+            qtdFuncionarios = qtdFuncionarios + 1
+
+        # Contabilização final do prêmio da fiscal
+        if qtdFuncionarios == 0:
+            mediaEquipe = 0
+            mediaFinal = 0
+        else:
+            mediaEquipe = round(totalEquipe / qtdFuncionarios,2)
+            mediaFinal = round(mediaEquipe / diasUteisGeral,2)
+
+        # Pegando percentual de premiação
+        if mediaFinal > 0:
+            for i in remuneracoes:
+                if mediaFinal <= i.faixaFinal and mediaFinal >= i.faixaInicial:
+                    percentualFiscal = float(i.percentualFiscal)
+                    percentualEncarregada = float(i.percentualEncarregada)
+        else:
+            percentualFiscal = 0
+            percentualEncarregada = 0
+
+        premiacaoFiscal = round(salarioFiscal * (percentualFiscal/100), 2)
+        premiacaoEncarregada = round(salarioEncarregada * (percentualEncarregada/100), 2)
+
     else:
         for i in linhas:
             producaoDia = 0.00
@@ -381,9 +418,34 @@ def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestant
             else:
                 i.append(0)
             i.append(round(total, 2)) # Soma Total
-    return linhas, datasSeparadas
 
-def criarPlanilhaSupervisorSemanal(wb, supervisor, colunas, linhas, datasSeparadas):
+            totalEquipe = totalEquipe + total
+            qtdFuncionarios = qtdFuncionarios + 1
+
+            # Contabilização final do prêmio da fiscal
+        if qtdFuncionarios == 0:
+            mediaEquipe = 0
+            mediaFinal = 0
+        else:
+            mediaEquipe = round(totalEquipe / qtdFuncionarios,2)
+            mediaFinal = round(mediaEquipe / diasUteisGeral,2)
+
+        # Pegando percentual de premiação
+        if mediaFinal > 0:
+            for i in remuneracoes:
+                if mediaFinal <= i.faixaFinal and mediaFinal >= i.faixaInicial:
+                    percentualFiscal = float(i.percentualFiscal)
+                    percentualEncarregada = float(i.percentualEncarregada)
+        else:
+            percentualFiscal = 0
+            percentualEncarregada = 0
+
+        premiacaoFiscal = round(salarioFiscal * (percentualFiscal/100), 2)
+        premiacaoEncarregada = round(salarioEncarregada * (percentualEncarregada/100), 2)
+
+    return linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada
+
+def criarPlanilhaSupervisorSemanal(wb, supervisor, colunas, linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada):
     
     #Criando variavéis necessárias
     ws = wb.add_sheet(supervisor.nome)
@@ -396,6 +458,10 @@ def criarPlanilhaSupervisorSemanal(wb, supervisor, colunas, linhas, datasSeparad
     # Add nome da cooperativa na celula (A1, B1) e pula duas linhas para baixo
     ws.write(row_num, 0, supervisor.cooperativa.nome, font_style)
     ws.write(row_num+1, 0, supervisor.nome, font_style)
+    ws.write(row_num+1, 1, "Prêmio Fiscal", font_style)
+    ws.write(row_num+1, 2, premiacaoFiscal, font_style)
+    ws.write(row_num+1, 3, "Prêmio Encarregada", font_style)
+    ws.write(row_num+1, 4, premiacaoEncarregada, font_style)
     row_num += 2
 
     # Colocando intervalo de datas nas colunas da planilha [[01/01 a 07/01], [08/01 as 14/01]]
@@ -434,38 +500,40 @@ def criarPlanilhaSupervisorSemanal(wb, supervisor, colunas, linhas, datasSeparad
 
 def exportar_producao_semanal(request):
 
-    try:
-        # Pegando datas e valor informados na página HTML (string)
-        data1 = request.POST.get('data1')
-        data2 = request.POST.get('data2')
-        vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
+    #try:
+    # Pegando datas e valor informados na página HTML (string)
+    data1 = request.POST.get('data1')
+    data2 = request.POST.get('data2')
+    vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
 
-        # Transformando string em datetime
-        dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
-        dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
+    # Transformando string em datetime
+    dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
+    dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
 
-        # Carregando os dados necessários para construção dos relatórios
-        producoes = pegarProducoes(dataInicial, dataFinal)
-        supervisores = pegarSupervisores()
-        colunas, datas, qtdSemanas, diasRestantes = pegarDatasSemanal(dataInicial, dataFinal)
+    # Carregando os dados necessários para construção dos relatórios
+    producoes = pegarProducoes(dataInicial, dataFinal)
+    supervisores = pegarSupervisores()
+    colunas, datas, qtdSemanas, diasRestantes = pegarDatasSemanal(dataInicial, dataFinal)
 
-        # Cria planilha de trabalho Excel
-        response = HttpResponse(content_type='application/ms-excel')
-        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao Semanal.xls"'
-        wb = xlwt.Workbook(encoding='utf-8')
+    # Cria planilha de trabalho Excel
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao Semanal.xls"'
+    wb = xlwt.Workbook(encoding='utf-8')
 
-        for i in range(len(supervisores)):
-            linhas, datasSeparadas = converterLinhasSemanal(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago)
-            criarPlanilhaSupervisorSemanal(wb, supervisores[i], colunas, linhas, datasSeparadas)
-        wb.save(response)
-        return response
-    except:
-        response = HttpResponse(content_type='application/ms-excel')
-        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
-        wb = xlwt.Workbook(encoding='utf-8')
-        ws = wb.add_sheet('Produtividade')
-        wb.save(response)
-        return response
+    remuneracoes = Remuneracao.objects.all()
+
+    for i in range(len(supervisores)):
+        linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada = converterLinhasSemanal(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago, remuneracoes)    
+        criarPlanilhaSupervisorSemanal(wb, supervisores[i], colunas, linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada)
+    wb.save(response)
+    return response
+    #except:
+        #response = HttpResponse(content_type='application/ms-excel')
+        #response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
+        #wb = xlwt.Workbook(encoding='utf-8')
+        #ws = wb.add_sheet('Produtividade')
+        #wb.save(response)
+        #return response
     
 def buscarFuncionarios():
 
