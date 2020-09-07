@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'funcionario',
     'producao',
     'remuneracao',
+    'fechamento',
 ]
 
 MIDDLEWARE = [

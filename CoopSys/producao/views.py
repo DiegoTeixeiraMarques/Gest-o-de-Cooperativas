@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from cooperativa.models import Cooperativa
 from frequencia.models import Frequencia
 from remuneracao.models import Remuneracao
+from fechamento.models import Fechamento
 from datetime import date, datetime
 import serial
 import pdb
@@ -286,7 +287,7 @@ def countFaltas(datas, funcionario):
                 faltas += 1
     return faltas
 
-def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrPago, remuneracoes):
+def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestantes, vrPago, remuneracoes, fechamento):
 
     """ Prepara a lista para ser inserida como linhas na planilha do relatório """
 
@@ -372,6 +373,20 @@ def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestant
             totalEquipe = totalEquipe + totalGeral
             qtdFuncionarios = qtdFuncionarios + 1
 
+            if fechamento == 'ok': # Verifica se a rotina de fechamento foi acionada para salvar os dados na tabela de fechamento
+                matricula = i[0].matricula
+                nome = i[0].nome
+                funcao = i[0].funcao
+                meta = i[0].meta
+                salario = i[0].salario
+                producaoTotal = totalGeral
+                vrPagoKG = vrPago
+                premio = premio
+                referencia = datas[-1]
+
+                registro = Fechamento(matricula=matricula, nome=nome, funcao=funcao, meta=meta, salario=salario, producaoTotal=producaoTotal, vrPagoKG=vrPagoKG, premio=premio, referencia=referencia)
+                registro.save()
+
         # Contabilização final do prêmio da fiscal
         if qtdFuncionarios == 0:
             mediaEquipe = 0
@@ -392,7 +407,6 @@ def converterLinhasSemanal(producoes, datas, supervisor, qtdSemanas, diasRestant
 
         premiacaoFiscal = round(salarioFiscal * (percentualFiscal/100), 2)
         premiacaoEncarregada = round(salarioEncarregada * (percentualEncarregada/100), 2)
-
     else:
         for i in linhas:
             producaoDia = 0.00
@@ -505,6 +519,7 @@ def exportar_producao_semanal(request):
     data1 = request.POST.get('data1')
     data2 = request.POST.get('data2')
     vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
+    fechamento = request.POST.get('fechamento') # "ok" indica que os dados serão salvos na tabela de fechamento
 
     # Transformando string em datetime
     dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
@@ -523,7 +538,7 @@ def exportar_producao_semanal(request):
     remuneracoes = Remuneracao.objects.all()
 
     for i in range(len(supervisores)):
-        linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada = converterLinhasSemanal(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago, remuneracoes)    
+        linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada = converterLinhasSemanal(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago, remuneracoes, fechamento)    
         criarPlanilhaSupervisorSemanal(wb, supervisores[i], colunas, linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada)
     wb.save(response)
     return response
