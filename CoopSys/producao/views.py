@@ -21,6 +21,10 @@ def index(request):
     data = dataBase
     hoje = date.today()
 
+    print(type(data))
+
+    data2 = datetime.strptime(data, "%Y-%m-%d")
+
     try:
         user = request.user.id
         funcionario = Funcionario.objects.get(codigo=codigo)
@@ -46,10 +50,10 @@ def index(request):
             pass
   
     try:
-        tam = len(ProducaoDiaria.objects.all().filter(usuario=user)) - 5
-        producao = ProducaoDiaria.objects.all().filter(usuario=user)[tam:]
+        tam = len(ProducaoDiaria.objects.all().filter(usuario=user, dia__data = data2)) - 5
+        producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = data2)[tam:]
     except:
-        producao = ProducaoDiaria.objects.all().filter(usuario=user)
+        producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = data2)
     try:
         template_name = 'index.html'
         context = {
