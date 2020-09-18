@@ -21,11 +21,10 @@ def index(request):
     data = dataBase
     hoje = date.today()
 
-    print(type(data))
-
-    data2 = datetime.strptime(data, "%Y-%m-%d")
+    
 
     try:
+        
         user = request.user.id
         funcionario = Funcionario.objects.get(codigo=codigo)
         usuario = User.objects.get(id=user)
@@ -40,6 +39,7 @@ def index(request):
     except:
         msg = 'Data não informada ou não cadastrada!'
     try:
+        
         producaoNova = ProducaoDiaria(dia=data, funcionario=funcionario, producao=peso, usuario=usuario)
         producaoNova.save()
         msg = 'Salvo com Sucesso!'
@@ -48,12 +48,12 @@ def index(request):
             msg = '...'
         else:
             pass
-  
     try:
+        data2 = datetime.strptime(data, "%Y-%m-%d")
         tam = len(ProducaoDiaria.objects.all().filter(usuario=user, dia__data = data2)) - 5
         producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = data2)[tam:]
     except:
-        producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = data2)
+        producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = data)
     try:
         template_name = 'index.html'
         context = {
