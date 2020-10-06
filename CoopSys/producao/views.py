@@ -510,44 +510,45 @@ def criarPlanilhaSupervisorSemanal(wb, supervisor, colunas, linhas, datasSeparad
             else:
                 ws.write(row_num, col_num, row[col_num], font_style)
     return True
+   
 
 def exportar_producao_semanal(request):
 
-    #try:
-    # Pegando datas e valor informados na página HTML (string)
-    data1 = request.POST.get('data1')
-    data2 = request.POST.get('data2')
-    vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
-    fechamento = request.POST.get('fechamento') # "ok" indica que os dados serão salvos na tabela de fechamento
+    try:
+        # Pegando datas e valor informados na página HTML (string)
+        data1 = request.POST.get('data1')
+        data2 = request.POST.get('data2')
+        vrPago = float(request.POST.get('vrPago')) # Pegando valor da pagina HTML
+        fechamento = request.POST.get('fechamento') # "ok" indica que os dados serão salvos na tabela de fechamento
 
-    # Transformando string em datetime
-    dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
-    dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
+        # Transformando string em datetime
+        dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()
+        dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()
 
-    # Carregando os dados necessários para construção dos relatórios
-    producoes = pegarProducoes(dataInicial, dataFinal)
-    supervisores = pegarSupervisores()
-    colunas, datas, qtdSemanas, diasRestantes = pegarDatasSemanal(dataInicial, dataFinal)
+        # Carregando os dados necessários para construção dos relatórios
+        producoes = pegarProducoes(dataInicial, dataFinal)
+        supervisores = pegarSupervisores()
+        colunas, datas, qtdSemanas, diasRestantes = pegarDatasSemanal(dataInicial, dataFinal)
 
-    # Cria planilha de trabalho Excel
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao Semanal.xls"'
-    wb = xlwt.Workbook(encoding='utf-8')
+        # Cria planilha de trabalho Excel
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao Semanal.xls"'
+        wb = xlwt.Workbook(encoding='utf-8')
 
-    remuneracoes = Remuneracao.objects.all()
+        remuneracoes = Remuneracao.objects.all()
 
-    for i in range(len(supervisores)):
-        linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada = converterLinhasSemanal(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago, remuneracoes, fechamento)    
-        criarPlanilhaSupervisorSemanal(wb, supervisores[i], colunas, linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada)
-    wb.save(response)
-    return response
-    #except:
-        #response = HttpResponse(content_type='application/ms-excel')
-        #response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
-        #wb = xlwt.Workbook(encoding='utf-8')
-        #ws = wb.add_sheet('Produtividade')
-        #wb.save(response)
-        #return response
+        for i in range(len(supervisores)):
+            linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada = converterLinhasSemanal(producoes, datas, supervisores[i], qtdSemanas, diasRestantes, vrPago, remuneracoes, fechamento)    
+            criarPlanilhaSupervisorSemanal(wb, supervisores[i], colunas, linhas, datasSeparadas, premiacaoFiscal, premiacaoEncarregada)
+        wb.save(response)
+        return response
+    except:
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="Relatorio de Producao.xls"'
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('Produtividade')
+        wb.save(response)
+        return response
     
 def buscarFuncionarios():
 
