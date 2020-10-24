@@ -26,7 +26,6 @@ JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = False
 
 # Application definition
-
 INSTALLED_APPS = [
     'jet',
     'jet.dashboard',

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from producao.views import index, exportar_producao_semanal, relatorio, exportar_producao_dia, exportar_producao_diadia, relatoriodiadia
+from producao.views import index, exportar_producao_semanal, relatorio, exportar_producao_dia
 from frequencia.views import apontarFalta
 
 urlpatterns = [
@@ -12,8 +12,5 @@ urlpatterns = [
     path('account/', apontarFalta, name="apontarFalta"),
     path('exportar_producao_semanal/', exportar_producao_semanal, name='exportar_producao_semanal'),
     path('exportar_producao_dia/', exportar_producao_dia, name='exportar_producao_dia'),
-    path('exportar_producao_diadia/', exportar_producao_diadia, name='exportar_producao_diadia'),
     path('relatorios/', relatorio, name="relatorio"),
-    path('relatoriodiadia/', relatoriodiadia, name="relatoriodiadia")
-    #path('', include('producao.urls')),
 ]
