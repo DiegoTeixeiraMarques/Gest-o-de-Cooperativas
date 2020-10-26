@@ -172,7 +172,7 @@ def exportar_producao_dia(request):
 ### Relatório Principal - Fechamento ###
 
 
-def exportar_producao_semanal(request):
+def exportar_producao_semanal2(request):
 
     #try:
     # Pegando datas e valor informados na página HTML (string)
@@ -511,8 +511,7 @@ def criarPlanilhaSupervisorSemanal(wb, supervisor, colunas, linhas, datasSeparad
 
 ### Relatório Otimizado
 
-
-def exportar_relatorio(request):
+def exportar_producao_semanal(request):
 
 ##### Capturando dados da página HTML
 
@@ -523,29 +522,50 @@ def exportar_relatorio(request):
     dataInicial = datetime.strptime(data1, '%Y-%m-%d').date()  # Transformando string em datetime
     dataFinal = datetime.strptime(data2, '%Y-%m-%d').date()  # Transformando string em datetime
 
-
 ##### Carregando os dados do banco
 
-    producoes = list(ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).values('funcionario__nome', 'funcionario__codigo','funcionario__matricula','funcionario__cooperativa__nome','funcionario__supervisor', 'producao', 'dia__data', 'dia__diaUtil'))
-    supervisores = list(Funcionario.objects.filter(funcao='F').values('matricula', 'codigo', 'nome', 'salario'))
+    producoes = list(ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).values('funcionario__nome', 'funcionario__codigo','funcionario__matricula','funcionario__cooperativa__nome','funcionario__supervisor__codigo', 'producao', 'dia__data', 'dia__diaUtil'))
+    supervisores = list(Funcionario.objects.filter(funcao='F').values('matricula', 'codigo', 'nome', 'salario', 'cooperativa__nome'))
     faltas = list(Frequencia.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal, presenca = 0).values('dia__data', 'funcionario__codigo', 'justificada'))
     datas = list(Calendario.objects.filter(data__gte = dataInicial, data__lte = dataFinal).values('data', 'diaUtil'))
     remuneracoes = list(Remuneracao.objects.filter().values('faixaInicial', 'faixaFinal', 'percentualFiscal', 'percentualEncarregada'))
     encarregadas = list(Funcionario.objects.filter(funcao='E').values('matricula', 'codigo', 'nome', 'salario'))
 
+##### Criando planilha e informando os parâmetros do relatório
 
-##### Mapeando colunas da planilha
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="Relatorio de Premiacao.xls"'
+    wb = xlwt.Workbook(encoding='utf-8')
+
+    # Escolhendo a fonte e deixando negrito a primeira linha (cabeçalho)
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+    
+    # Nomeando Plan
+    ws = wb.add_sheet("Parametros")
+
+    # Listando parâmetros
+    ws.write(0, 0, "Parametros utilizados", font_style)
+    ws.write(2, 0, "Emissão: ", font_style)
+    ws.write(3, 0, "Data Inicial: ", font_style)
+    ws.write(4, 0, "Data Final: ", font_style)
+    ws.write(5, 0, "Valor Pago (R$/Kg): ", font_style)
+    ws.write(6, 0, "Executou Fechamento? ", font_style)
+
+    ws.write(2, 1, str(date.today().year) + '-' + str(date.today().month) + '-' + str(date.today().day) , font_style)
+    ws.write(3, 1, data1, font_style)
+    ws.write(4, 1, data2, font_style)
+    ws.write(5, 1, str(vrPago), font_style)
+    ws.write(6, 1, "Sim" if fechamento == "ok" else "Não", font_style)
+
+#### Passando informações para o contrutor de planilhas
 
     colunas = ['Funcionario', 'Matricula']
     cabecalho = []  # Contem o intervalo de datas semanal
-
     qtdDias = (dataFinal - dataInicial).days + 1 
     qtdSemanas = 0
     diasRestantes = 0
-
-    # Verificando se existe qtd de dias para rodar o loop
-    if qtdDias == 0:
-         qtdDias = 1
+    datasSeparadas = []
 
     # Verificando se intervalo de datas ultrapassa uma semana
     if qtdDias > 7:
@@ -564,88 +584,81 @@ def exportar_relatorio(request):
         colunas.append('KG')
         colunas.append('M.EF.')
         colunas.append('M.GE.')
-        colunas.append('PREMIO R$')
-        colunas.append('DIAS MEF')
-        colunas.append('DIAS MGE')
+        colunas.append('Premio R$')
+        colunas.append('Dias MEF')
+        colunas.append('Dias MGE')
 
-    for i in range(qtdSemanas):
-       primeiro = i * 7
-       ultimo = primeiro + 7       
-       cabecalho.append('Dia ' + str(datas[primeiro]['data'].day) + ' à ' + str(datas[ultimo]['data'].day) if i == 0 else 'Dia ' + str(datas[primeiro+1]['data'].day) + ' à ' + str(datas[ultimo]['data'].day))
-    
-    for i in range(diasRestantes):
+    # Separando datas
+    for semana in range(qtdSemanas):
+        posicao1 = semana * 7 # Pega a primeira data da semana do loop
+        posicao2 = posicao1 + 7 # Pega a última data da semana do loop
+        dias = datas[posicao1:posicao2]
+        datasSeparadas.append(dias)
+    if diasRestantes > 0:
+        dias = datas[-diasRestantes:]
+        if type(dias) == list:
+            datasSeparadas.append(dias)
+        else:
+            datasSeparadas.append([dias])
+
+    # Criando cabeçalhos do intervalo de dias incluindo os dias restantes
+    for i in datasSeparadas:
+        cabecalho.append('  Dia ' + str(i[0]['data'].day) + ' à ' + str(i[-1]['data'].day) + '  ')
+    cabecalho.append('  Total: Dia ' + str(datasSeparadas[0][0]['data'].day) + ' à ' + str(datasSeparadas[-1][-1]['data'].day) + '  ')
+
+
+
+
+    # Construindo planilhas
+    for supervisor in supervisores:
+        # Definindo fonte
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+
+        # Nomeando Plan
+        ws = wb.add_sheet(supervisor['nome'])
+
+        # Listando primeiras informações
+        ws.write(0, 0, supervisor['cooperativa__nome'], font_style)
+        ws.write(1, 0, "Fiscal: " + supervisor['nome'] + ' - '+ supervisor['matricula'], font_style)
+        ws.write(2, 0, 'Prêmio: ' + "1000,00", font_style)
+
+        # Listando cabeçalhos de datas
+        num_lin = 4
+        salto_coluna = 2
+        for num_col in range(len(cabecalho)):
+            ws.write(num_lin, salto_coluna, cabecalho[num_col], font_style)
+            salto_coluna = salto_coluna + 1
+            ws.write(num_lin, salto_coluna, cabecalho[num_col], font_style)
+            salto_coluna = salto_coluna + 1
+            ws.write(num_lin, salto_coluna, cabecalho[num_col], font_style)
+            salto_coluna = salto_coluna + 1
+            
+        # Listando colunas
+        num_lin = 5
+        for num_col in range(len(colunas)):
+            ws.write(num_lin, num_col, colunas[num_col], font_style)
+
+        # Capturando produções da equipe do Fiscal
+        producoesFiscal = []
+        for prod in producoes:
+            if (prod['funcionario__supervisor__codigo'] == supervisor['codigo']):
+                producoesFiscal.append(prod)
         
+        # Busacando funcionários do Fiscal
+        funcionarios = list(Funcionario.objects.filter(supervisor__codigo=supervisor['codigo']).values('nome', 'matricula', 'codigo'))
 
-     
+        # Listando Funcionários e Matrículas
+        num_lin = 6
+        for i in funcionarios:
+            ws.write(num_lin, 0, i['nome'], font_style)
+            ws.write(num_lin, 1, i['matricula'], font_style)
+            num_lin = num_lin + 1
 
-
-##### Cria planilha Excel
-
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="Relatorio de Premiacao.xls"'
-    wb = xlwt.Workbook(encoding='utf-8')
-
-
-### Executa o tratamento dos dados
-
-    pass
-
-
-##### Monta planilha
-
-    #Criando variavéis necessárias
-    ws = wb.add_sheet(supervisor.nome)
-    row_num = 0
     
-    # Escolhendo a fonte e deixando negrito a primeira linha (cabeçalho)
-    font_style = xlwt.XFStyle()
-    font_style.font.bold = True
-
-    # Add nome da cooperativa na celula (A1, B1) e pula duas linhas para baixo
-    ws.write(row_num, 0, supervisor.cooperativa.nome, font_style)
-    ws.write(row_num+1, 0, supervisor.nome, font_style)
-    ws.write(row_num+1, 1, "Prêmio Fiscal", font_style)
-    ws.write(row_num+1, 2, premiacaoFiscal, font_style)
-    ws.write(row_num+1, 3, "Prêmio Encarregada", font_style)
-    ws.write(row_num+1, 4, premiacaoEncarregada, font_style)
-    row_num += 2
-
-    # Colocando intervalo de datas nas colunas da planilha [[01/01 a 07/01], [08/01 as 14/01]]
-    posicaoColuna = 2
-    for i in range(len(datasSeparadas)):
-        intervaloDatas = datasSeparadas[i][0].strftime('%d/%m') + ' a ' + datasSeparadas[i][-1].strftime('%d/%m')
-        ws.write(row_num, posicaoColuna, intervaloDatas, font_style)
-        posicaoColuna = posicaoColuna + 3
-    
-    # Add intervalo de datas geral nos totalizadores
-    intervaloDatas = datasSeparadas[0][0].strftime('%d/%m') + ' a ' + datasSeparadas[-1][-1].strftime('%d/%m')
-    ws.write(row_num, posicaoColuna, intervaloDatas, font_style)
-
-    row_num += 1
-
-    # Colocando as colunas na planilha
-    for col_num in range(len(colunas)):
-        ws.write(row_num, col_num, colunas[col_num], font_style)
-    
-    # Mudando o estilo da fonte para inserção das linhas na planilha
-    font_style = xlwt.XFStyle()
-
-    for row in linhas:
-        row_num += 1
-        for col_num in range(len(row)):
-            # Ex.: [ ['Nome'],['xxxxxx'],['xxxxxx'],['xxxxxx'], ... ]
-            if col_num == 0:
-                ws.write(row_num, col_num, row[col_num].nome, font_style)
-            # [ ['xxxxx'],['Matricula'],['xxxxxx'],['xxxxxx'], ... ]
-            elif col_num == 1:
-                ws.write(row_num, col_num, row[col_num], font_style)
-            # [ ['xxxxx'],['xxxxxx'],['data1'],['data2'], ... ]
-            else:
-                ws.write(row_num, col_num, row[col_num], font_style)
-
-
-
-    ##### Retrona planilha criada
-
     wb.save(response)
+    print("Qtd de consultas relatorio 05: ", len(connection.queries))
     return response
+    
+    
+

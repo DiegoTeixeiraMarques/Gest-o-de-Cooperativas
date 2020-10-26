@@ -19,12 +19,12 @@
             <form method="POST" id="form1" action="{% url 'exportar_producao_semanal' %}">
                 {% csrf_token %}
                 
-
                 <div class="col-12"style="margin: 20px; padding: 50px; border-radius: 10px;">
-                    <h4>Produtividade e Premiação (Semanal)</h4>
+                    <h4>Produtividade e Premiação</h4>
+                    <h6 style="color: red;">Insira um intervalo no mínimo de 8 dias</h6>
 
                     <div class="row">
-                        <input id="data1" name="data1" class="form-control" type="date" placeholder="DD/MM/YYYY" autofocus style="margin-top: 20px">
+                        <input id="data1" name="data1" class="form-control" type="date" placeholder="DD/MM/YYYY" autofocus style="margin-top: 10px">
                     </div>
 
                     <div class="row">
