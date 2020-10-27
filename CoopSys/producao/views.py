@@ -185,7 +185,7 @@ def exportar_producao_semanal(request):
 
     ##### Carregando os dados do banco
 
-        producoes = list(ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).values('funcionario__codigo','funcionario__supervisor__codigo', 'producao', 'dia__data'))
+        producoes = list(ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).values('funcionario__nome', 'funcionario__matricula', 'funcionario__codigo','funcionario__supervisor__codigo', 'funcionario__supervisor__nome', 'producao', 'dia__data'))
         supervisores = list(Funcionario.objects.filter(funcao='F').values('matricula', 'codigo', 'nome', 'salario', 'cooperativa__nome', 'funcao', 'meta'))
         faltas = list(Frequencia.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal, presenca = 0).values('dia__data', 'funcionario__codigo', 'justificada'))
         datas = list(Calendario.objects.filter(data__gte = dataInicial, data__lte = dataFinal).values('data', 'diaUtil'))
@@ -486,6 +486,31 @@ def exportar_producao_semanal(request):
 
             registro = Fechamento(matricula=matricula, nome=nome, funcao=funcao, meta=meta, salario=salario, producaoTotal=producaoTotal, vrPagoKG=vrPagoKG, premio=premio, referencia=referencia)
             registro.save()
+
+        # Plan dados gerais de produção do mês
+        ws = wb.add_sheet('Produções registradas')
+        # Colunas
+        ws.write(0, 0, 'Funcionário', font_style)
+        ws.write(0, 1, 'Matrícula', font_style)
+        ws.write(0, 2, 'Código', font_style)
+        ws.write(0, 3, 'Cod. Fiscal', font_style)
+        ws.write(0, 4, 'Fiscal', font_style)
+        ws.write(0, 5, 'Produção', font_style)
+        ws.write(0, 6, 'Dia', font_style)
+        # Linhas
+        linha = 1
+        for producao in producoes:
+
+            ws.write(linha, 0, producao['funcionario__nome'], font_style)
+            ws.write(linha, 1, producao['funcionario__matricula'], font_style)
+            ws.write(linha, 2, producao['funcionario__codigo'], font_style)
+            ws.write(linha, 3, producao['funcionario__supervisor__codigo'], font_style)
+            ws.write(linha, 4, producao['funcionario__supervisor__nome'], font_style)
+            ws.write(linha, 5, producao['producao'], font_style)
+            ws.write(linha, 6, producao['dia__data'].strftime('%m/%d/%Y'), font_style)
+
+            linha = linha + 1
+            
             
         wb.save(response)
         print("Qtd de consultas relatorio", len(connection.queries))
@@ -508,6 +533,3 @@ def exportar_producao_semanal(request):
         ws.write(4, 0, "5 - Contacte o administrador", font_style)
         wb.save(response)
         return response
-    
-    
-
