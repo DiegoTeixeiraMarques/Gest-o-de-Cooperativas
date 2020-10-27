@@ -50,7 +50,7 @@ def index(request):
         producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = dataBase).order_by('-created_at')[:5]
     except:
         producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = dataBase)
-        print("exceção")
+        #print("exceção")
     try:
         template_name = 'index.html'
         context = {
@@ -69,7 +69,7 @@ def index(request):
             'data_base': data,
             'hoje': hoje
         }
-    print("Qtd de consultas: ", len(connection.queries))
+    #print("Qtd de consultas: ", len(connection.queries))
     return render(request, template_name, context)
     
 def relatorio(request):
@@ -368,9 +368,6 @@ def exportar_producao_semanal(request):
                     diasMEFSemana =  diasUteisSemana - faltasSemana
                     diasMGESemana = diasUteisSemana - (faltasSemana - justificadasSemana)
 
-                    print(diasMEFSemana)
-                    print(diasMGESemana)
-
                     try:
                         MEFSemana = round(totalSemana / diasMEFSemana, 2)
                     except:
@@ -491,7 +488,7 @@ def exportar_producao_semanal(request):
             registro.save()
             
         wb.save(response)
-        print("Qtd de consultas relatorio 05: ", len(connection.queries))
+        print("Qtd de consultas relatorio", len(connection.queries))
         return response
 
     except:
