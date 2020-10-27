@@ -49,7 +49,7 @@ def index(request):
     try:
         producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = dataBase).order_by('-created_at')[:5]
     except:
-        producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = dataBase)
+        producao = ProducaoDiaria.objects.all().filter(usuario=user, dia__data = dataBase).order_by('-created_at')
         #print("exceção")
     try:
         template_name = 'index.html'
@@ -389,8 +389,8 @@ def exportar_producao_semanal(request):
 
                 diasEfetivosMes = diasUteis - faltasMes
                 diasMediaGeralMes = diasUteis - (faltasMes - justificadasMes)
-                MEFMes = round(totalMes / diasUteis - diasEfetivosMes, 2)
-                MGEMes = round(totalMes / diasUteis - diasMediaGeralMes, 2)
+                MEFMes = round(totalMes / diasEfetivosMes, 2)
+                MGEMes = round(totalMes / diasMediaGeralMes, 2)
                 premio = (MGEMes - float(funcionario['meta'])) * diasMediaGeralMes * vrPago # Calculo do premio
 
                 if (premio < 0.00):
@@ -507,7 +507,7 @@ def exportar_producao_semanal(request):
             ws.write(linha, 3, producao['funcionario__supervisor__codigo'], font_style)
             ws.write(linha, 4, producao['funcionario__supervisor__nome'], font_style)
             ws.write(linha, 5, producao['producao'], font_style)
-            ws.write(linha, 6, producao['dia__data'].strftime('%m/%d/%Y'), font_style)
+            ws.write(linha, 6, producao['dia__data'].strftime('%d/%m/%Y'), font_style)
 
             linha = linha + 1
             
