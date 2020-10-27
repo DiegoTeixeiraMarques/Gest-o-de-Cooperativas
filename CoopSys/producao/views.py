@@ -119,14 +119,14 @@ def pegarPeso():
                 _serial.close()
 
                 #new_weight = "".join(new_weight)
-                new_weight = 35
+                new_weight = 0
                 
             else:
                 #print("fechado")
                 new_weight = 0
         except:
             #print("exceção na pesagem")
-            new_weight = 35
+            new_weight = 0
         porta = porta + 1
         #print(listaPortas[porta])
     return (new_weight)
