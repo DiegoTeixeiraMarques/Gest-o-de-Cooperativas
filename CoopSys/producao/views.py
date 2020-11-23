@@ -118,8 +118,8 @@ def pegarPeso():
 
                 _serial.close()
 
-                #new_weight = "".join(new_weight)
-                new_weight = 0
+                new_weight = "".join(new_weight)
+                #new_weight = 0
                 
             else:
                 #print("fechado")
@@ -354,7 +354,7 @@ def exportar_producao_semanal(request):
                             totalSemana = totalSemana + float(producao['producao'])
                     # Pega faltas
                     for falta in faltas:
-                        if(falta['funcionario__codigo'] == funcionario['codigo']):
+                        if(falta['funcionario__codigo'] == funcionario['codigo'] and str(falta['dia__data']) in datasSemana):
                             faltasSemana = faltasSemana + 1
                             if falta['justificada'] == True:
                                 justificadasSemana = justificadasSemana + 1
@@ -403,6 +403,9 @@ def exportar_producao_semanal(request):
                 ws.write(num_lin, len(colunas) - 2, diasEfetivosMes, font_style)
                 ws.write(num_lin, len(colunas) - 1, diasMediaGeralMes, font_style)
 
+                #ws.write(num_lin, len(colunas) + 1, diasUteis, font_style)  # Auditoria de dias úteis
+                #ws.write(num_lin, len(colunas) + 2, faltasMes, font_style)  # Auditoria de faltas
+
                 num_lin = num_lin + 1
                 num_col = 2
 
@@ -439,6 +442,11 @@ def exportar_producao_semanal(request):
                         
                         percentualFiscal = float(remuneracao['percentualFiscal'])
                         percentualEncarregada = float(remuneracao['percentualEncarregada'])
+
+                    else:
+
+                        percentualFiscal = 0
+                        percentualEncarregada = 0
             else:
                 percentualFiscal = 0
                 percentualEncarregada = 0
@@ -513,7 +521,7 @@ def exportar_producao_semanal(request):
             
             
         wb.save(response)
-        print("Qtd de consultas relatorio", len(connection.queries))
+        #print("Qtd de consultas relatorio", len(connection.queries))
         return response
 
     except:
