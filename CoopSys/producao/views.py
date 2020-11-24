@@ -186,7 +186,7 @@ def exportar_producao_semanal(request):
     ##### Carregando os dados do banco
 
         producoes = list(ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).values('funcionario__nome', 'funcionario__matricula', 'funcionario__codigo','funcionario__supervisor__codigo', 'funcionario__supervisor__nome', 'producao', 'dia__data'))
-        supervisores = list(Funcionario.objects.filter(funcao='F').values('matricula', 'codigo', 'nome', 'salario', 'cooperativa__nome', 'funcao', 'meta'))
+        supervisores = list(Funcionario.objects.filter(funcao='F', ativo=True).values('matricula', 'codigo', 'nome', 'salario', 'cooperativa__nome', 'funcao', 'meta'))
         faltas = list(Frequencia.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal, presenca = 0).values('dia__data', 'funcionario__codigo', 'justificada'))
         datas = list(Calendario.objects.filter(data__gte = dataInicial, data__lte = dataFinal).values('data', 'diaUtil'))
         remuneracoes = list(Remuneracao.objects.filter().values('faixaInicial', 'faixaFinal', 'percentualFiscal', 'percentualEncarregada'))
@@ -324,7 +324,7 @@ def exportar_producao_semanal(request):
                     producoesFiscal.append(prod)
 
             # Buscando funcionários do Fiscal
-            funcionarios = list(Funcionario.objects.filter(supervisor__codigo=supervisor['codigo']).values('nome', 'matricula', 'codigo', 'salario', 'meta', 'funcao'))
+            funcionarios = list(Funcionario.objects.filter(supervisor__codigo=supervisor['codigo'], ativo=True).values('nome', 'matricula', 'codigo', 'salario', 'meta', 'funcao'))
 
             # Listando Funcionários, Matrículas e Produção
             num_lin = 6

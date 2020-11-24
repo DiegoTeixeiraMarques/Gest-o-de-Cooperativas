@@ -24,6 +24,7 @@ class Funcionario(models.Model):
     meta = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Meta", null=True, blank=True)
     supervisor = models.ForeignKey('self', on_delete=models.CASCADE, related_name='funcionario', verbose_name="Supervisor", null=True, blank=True)
     salario = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Salário", null=True, blank=True)
+    ativo = models.BooleanField(verbose_name='Ativo', default=True, null=False, blank=False)  # Add 24/11/2020
 
     funcao = models.CharField(
         max_length=1,
