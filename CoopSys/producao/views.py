@@ -438,13 +438,15 @@ def exportar_producao_semanal(request):
             # Pegando percentual de premiação
             if mediaFinalFiscal > 0:
                 for remuneracao in remuneracoes:
+
                     if mediaFinalFiscal <= float(remuneracao['faixaFinal']) and mediaFinalFiscal >= float(remuneracao['faixaInicial']):
                         
                         percentualFiscal = float(remuneracao['percentualFiscal'])
                         percentualEncarregada = float(remuneracao['percentualEncarregada'])
+                        break
 
                     else:
-
+                      
                         percentualFiscal = 0
                         percentualEncarregada = 0
             else:
