@@ -185,7 +185,7 @@ def exportar_producao_semanal(request):
 
     ##### Carregando os dados do banco
 
-        producoes = list(ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).values('funcionario__nome', 'funcionario__matricula', 'funcionario__codigo','funcionario__supervisor__codigo', 'funcionario__supervisor__nome', 'producao', 'dia__data'))
+        producoes = list(ProducaoDiaria.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal).values('funcionario__nome', 'funcionario__matricula', 'funcionario__codigo','funcionario__supervisor__codigo', 'funcionario__supervisor__nome', 'producao', 'dia__data', 'funcionario__cooperativa__nome'))
         supervisores = list(Funcionario.objects.filter(funcao='F', ativo=True).values('matricula', 'codigo', 'nome', 'salario', 'cooperativa__nome', 'funcao', 'meta'))
         faltas = list(Frequencia.objects.filter(dia__data__gte = dataInicial, dia__data__lte = dataFinal, presenca = 0).values('dia__data', 'funcionario__codigo', 'justificada'))
         datas = list(Calendario.objects.filter(data__gte = dataInicial, data__lte = dataFinal).values('data', 'diaUtil'))
@@ -248,6 +248,7 @@ def exportar_producao_semanal(request):
             colunas.append('Premio R$')
             colunas.append('Dias MEF')
             colunas.append('Dias MGE')
+            colunas.append('Unidade')
 
         # Separando datas
         for semana in range(qtdSemanas):
@@ -324,7 +325,7 @@ def exportar_producao_semanal(request):
                     producoesFiscal.append(prod)
 
             # Buscando funcionários do Fiscal
-            funcionarios = list(Funcionario.objects.filter(supervisor__codigo=supervisor['codigo'], ativo=True).values('nome', 'matricula', 'codigo', 'salario', 'meta', 'funcao'))
+            funcionarios = list(Funcionario.objects.filter(supervisor__codigo=supervisor['codigo'], ativo=True).values('nome', 'matricula', 'codigo', 'salario', 'meta', 'funcao', 'cooperativa__nome'))
 
             # Listando Funcionários, Matrículas e Produção
             num_lin = 6
@@ -396,12 +397,14 @@ def exportar_producao_semanal(request):
                 if (premio < 0.00):
                     premio = 0.00
 
-                ws.write(num_lin, len(colunas) - 6, totalMes, font_style)
-                ws.write(num_lin, len(colunas) - 5, MEFMes, font_style)
-                ws.write(num_lin, len(colunas) - 4, MGEMes, font_style)
-                ws.write(num_lin, len(colunas) - 3, premio, font_style)
-                ws.write(num_lin, len(colunas) - 2, diasEfetivosMes, font_style)
-                ws.write(num_lin, len(colunas) - 1, diasMediaGeralMes, font_style)
+                ws.write(num_lin, len(colunas) - 7, totalMes, font_style)
+                ws.write(num_lin, len(colunas) - 6, MEFMes, font_style)
+                ws.write(num_lin, len(colunas) - 5, MGEMes, font_style)
+                ws.write(num_lin, len(colunas) - 4, premio, font_style)
+                ws.write(num_lin, len(colunas) - 3, diasEfetivosMes, font_style)
+                ws.write(num_lin, len(colunas) - 2, diasMediaGeralMes, font_style)
+
+                ws.write(num_lin, len(colunas) - 1, funcionario['cooperativa__nome'], font_style)
 
                 #ws.write(num_lin, len(colunas) + 1, diasUteis, font_style)  # Auditoria de dias úteis
                 #ws.write(num_lin, len(colunas) + 2, faltasMes, font_style)  # Auditoria de faltas
@@ -446,7 +449,7 @@ def exportar_producao_semanal(request):
                         break
 
                     else:
-                      
+                        
                         percentualFiscal = 0
                         percentualEncarregada = 0
             else:
@@ -507,6 +510,7 @@ def exportar_producao_semanal(request):
         ws.write(0, 4, 'Fiscal', font_style)
         ws.write(0, 5, 'Produção', font_style)
         ws.write(0, 6, 'Dia', font_style)
+        ws.write(0, 7, 'Unidade', font_style)
         # Linhas
         linha = 1
         for producao in producoes:
@@ -518,6 +522,7 @@ def exportar_producao_semanal(request):
             ws.write(linha, 4, producao['funcionario__supervisor__nome'], font_style)
             ws.write(linha, 5, producao['producao'], font_style)
             ws.write(linha, 6, producao['dia__data'].strftime('%d/%m/%Y'), font_style)
+            ws.write(linha, 7, producao['funcionario__cooperativa__nome'], font_style)
 
             linha = linha + 1
             
